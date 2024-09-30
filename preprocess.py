@@ -3,7 +3,7 @@ import json
 import numpy as np
 
 # train_dir = 'D:/signData'
-train_dir = '/home/root/data/signData'
+train_dir = '/root/data/signData'
 output_dir = f"{train_dir}/nptxt"
 json_folder_path = f'{train_dir}/train/label/landmark'
 
@@ -67,10 +67,9 @@ for person in os.listdir(json_folder_path):
                         word_output_path = os.path.join(person_output_path, f'{word}.npz')
 
                         # Save multiple arrays for the word (Left hand, Right hand, Pose)
-                        np.savez(word_output_path, wordCoordL=wordCoordL, wordCoordR=wordCoordR, wordCoordP=wordCoordP)
-                        print(f"Saved {word_output_path}")
                 except json.JSONDecodeError as e:
                     print(f"Error reading {file_path}: {e}")
                     break
-
+            np.savez(word_output_path, wordCoordL=wordCoordL, wordCoordR=wordCoordR, wordCoordP=wordCoordP)
+            print(f"Saved {word_output_path}")
             # Final word data is stored in wordCoordL, wordCoordR, and wordCoordP
