@@ -19,6 +19,8 @@ from keras import initializers
 
 # global variables
 model = None
+checkpoint_manager = None
+checkpoint = None
 he_init = initializers.HeUniformV2()
 
 # Hyperparamerters
@@ -37,7 +39,7 @@ combined_dense2_size = 128
 combined_output_size = 12
 # optimizer
 learning_rate = 0.0001
-loss = 'mse'
+loss = keras.losses.BinaryCrossentropy(from_logits=False)
 batch_size = 16
 
 
@@ -116,7 +118,7 @@ class PoseModel(Model):
         y = tf.squeeze(y)
         z = tf.squeeze(z)
         temp = tf.stack([x, y, z], axis=2)
-        temp = layers.Reshape((conv_shape[2], 3 * conv_shape[4])) # 3 from x y z 3 channels
+        temp = layers.Reshape((conv_shape[2], 3 * conv_shape[4]))(temp) # 3 from x y z 3 channels
         return self.ln(temp, training = training)
         
 
@@ -136,9 +138,10 @@ class SLRModel(Model):
 
     def call(self, inputs):
         # inputs 0: L, 1: R, 2: Pose
-        l_res = self.left_hand_model(inputs[0])
-        r_res = self.right_hand_model(inputs[1])
-        p_res = self.pose_model(inputs[2])
+        l_inputs, r_inputs, p_inputs = inputs
+        l_res = self.left_hand_model(l_inputs)
+        r_res = self.right_hand_model(r_inputs)
+        p_res = self.pose_model(p_inputs)
         l_res = self.flat(l_res)
         r_res = self.flat(r_res)
         p_res = self.flat(p_res)
@@ -162,7 +165,7 @@ model.compile(optimizer = optimizer, loss=loss, run_eagerly=False)
 # def model_summary():
 #     return model.summary()
 
-def reload_model():
+def reinit_model():
     """reinitialize the model, reloads and resets the model"""
     model = SLRModel()
     optimizer = optimizers.Adam(learning_rate = learning_rate)
@@ -180,6 +183,32 @@ def train(x_train, y_train, epochs):
 def predict(inputs, verbose='auto'):
     res = model.predict(inputs, verbose= verbose)
     return res
+
+def save_model(file_path, for_deployment= False):
+    global model, checkpoint, checkpoint_manager
+    if for_deployment:
+        # TODO
+        pass
+    else:
+        if checkpoint_manager is None:
+            checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
+            checkpoint_manager = tf.train.CheckpointManager(checkpoint, file_path, max_to_keep=None)
+        checkpoint_manager.save()
+        # tf.saved_model.save(model, file_path)
+        
+
+def load_model(file_path):
+    global model, checkpoint, checkpoint_manager
+    # model = tf.saved_model.load(file_path)
+    if checkpoint_manager is None:
+            checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
+            checkpoint_manager = tf.train.CheckpointManager(checkpoint, file_path, max_to_keep=None)
+    latest_checkpoint = checkpoint_manager.latest_checkpoint
+    if latest_checkpoint:
+        checkpoint.restore(latest_checkpoint)
+        print(f"Restored from {latest_checkpoint}")
+    else:
+        print("No checkpoint found, training from scratch.")
 
 # the part that doesnt get executed when imported
 if __name__ == "__main__":
