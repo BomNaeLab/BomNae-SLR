@@ -21,7 +21,7 @@ from keras import initializers
 model = None
 checkpoint_manager = None
 checkpoint = None
-he_init = initializers.HeUniformV2()
+he_init = initializers.HeUniform()
 
 # Hyperparamerters
 # hand : conv3D
@@ -41,6 +41,10 @@ combined_output_size = 12
 learning_rate = 0.0001
 loss = keras.losses.BinaryCrossentropy(from_logits=False)
 batch_size = 16
+
+
+# custom loss
+# TODO
 
 
 
