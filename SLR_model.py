@@ -40,6 +40,7 @@ combined_output_size = 12
 # optimizer
 learning_rate = 0.0001
 loss = keras.losses.BinaryCrossentropy(from_logits=False)
+metric = keras.metrics.BinaryAccuracy()
 
 
 # custom loss
@@ -161,10 +162,10 @@ class SLRModel(Model):
 model = SLRModel()
 optimizer = optimizers.Adam(learning_rate = learning_rate)
 # model.build((1,))
-model.compile(optimizer = optimizer, loss=loss, run_eagerly=False)
+model.compile(optimizer = optimizer, loss=loss, metrics=[metric])
 
-# def get_model():
-#     return model
+def get_model():
+    return model
 
 # def model_summary():
 #     return model.summary()
@@ -174,19 +175,23 @@ def reinit_model():
     model = SLRModel()
     optimizer = optimizers.Adam(learning_rate = learning_rate)
     # model.build((1,))
-    model.compile(optimizer = optimizer, loss=loss, run_eagerly=False)
+    model.compile(optimizer = optimizer, loss=loss, metrics=[metric])
+    return model
 
 # def set_batch_size(size = 16):
 #     global batch_size
 #     batch_size = size
 
-def train(x_train, y_train, epochs, batch_size):
-    hist = model.fit(x_train, y_train, epochs = epochs, batch_size= batch_size)
-    return hist
+# def train(x_train, y_train, epochs, batch_size):
+#     hist = model.fit(x_train, y_train, epochs = epochs, batch_size= batch_size)
+#     return hist
 
-def predict(inputs, batch_size, verbose='auto'):
-    res = model.predict(inputs, batch_size, verbose= verbose)
-    return res
+# def predict(inputs, batch_size, verbose='auto'):
+#     res = model.predict(inputs, batch_size, verbose= verbose)
+#     return res
+
+# def evaluate(x_test, y_test, batch_size):
+#     return model.evaluate(x_test, y_test, batch_size)
 
 def save_model(file_path, for_deployment= False):
     global model, checkpoint, checkpoint_manager
@@ -213,6 +218,7 @@ def load_model(file_path):
         print(f"Restored from {latest_checkpoint}")
     else:
         print("No checkpoint found, training from scratch.")
+    return model
 
 # the part that doesnt get executed when imported
 if __name__ == "__main__":
