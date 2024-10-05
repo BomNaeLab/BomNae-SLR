@@ -40,7 +40,6 @@ combined_output_size = 12
 # optimizer
 learning_rate = 0.0001
 loss = keras.losses.BinaryCrossentropy(from_logits=False)
-batch_size = 16
 
 
 # custom loss
@@ -77,6 +76,7 @@ class HandModel(Model):
         output shape: (batch, convolved_time, convolved_h * convolved_w * filter_size)"""
     def __init__(self, kernel_size = (33,3,3), filters= 1, strides = (2,1,1)):
         super().__init__()
+        self.filters = filters
         self.conv21 = Conv2Plus1D(kernel_size = kernel_size, filters= filters, strides = strides)
         self.ln = layers.LayerNormalization()
 
@@ -85,7 +85,7 @@ class HandModel(Model):
         conv_shape = x.shape
         # current shape: (batch, convolved_time, convolved_h, convolved_w, filter_size)
         x = tf.squeeze(x)
-        x = layers.Reshape((conv_shape[1], conv_shape[2] * conv_shape[3] * conv_shape[4]))(x)
+        x = layers.Reshape((conv_shape[1], conv_shape[2] * conv_shape[3] * self.filters))(x)
         return self.ln(x, training= training)
 
 
@@ -113,16 +113,16 @@ class PoseModel(Model):
         temp = tf.expand_dims(temp, axis=4)
         # current shape: xyz_channel, time, FC_result, 1
         xyz = tf.split(temp, 3, axis = 1)
-        x = self.conv2_x(xyz[0])
-        y = self.conv2_y(xyz[1])
-        z = self.conv2_z(xyz[2])
+        x = self.conv2_x(tf.squeeze(xyz[0], axis= 1))
+        y = self.conv2_y(tf.squeeze(xyz[1], axis= 1))
+        z = self.conv2_z(tf.squeeze(xyz[2], axis= 1))
         conv_shape = x.shape
-        # shape: (batch, 1, conv_time, 1, filter_size) -> (batch, conv_time, filter_size) -> (batch, conv_time, xyz_ch, filter_size)
+        # shape: (batch, conv_time, 1, filter_size) -> (batch, conv_time, filter_size) -> (batch, conv_time, xyz_ch, filter_size)
         x = tf.squeeze(x)
         y = tf.squeeze(y)
         z = tf.squeeze(z)
         temp = tf.stack([x, y, z], axis=2)
-        temp = layers.Reshape((conv_shape[2], 3 * conv_shape[4]))(temp) # 3 from x y z 3 channels
+        temp = layers.Reshape((conv_shape[1], 3 * conv_shape[3]))(temp) # 3 from x y z 3 channels
         return self.ln(temp, training = training)
         
 
@@ -176,16 +176,16 @@ def reinit_model():
     # model.build((1,))
     model.compile(optimizer = optimizer, loss=loss, run_eagerly=False)
 
-def set_batch_size(size = 16):
-    global batch_size
-    batch_size = size
+# def set_batch_size(size = 16):
+#     global batch_size
+#     batch_size = size
 
-def train(x_train, y_train, epochs):
+def train(x_train, y_train, epochs, batch_size):
     hist = model.fit(x_train, y_train, epochs = epochs, batch_size= batch_size)
     return hist
 
-def predict(inputs, verbose='auto'):
-    res = model.predict(inputs, verbose= verbose)
+def predict(inputs, batch_size, verbose='auto'):
+    res = model.predict(inputs, batch_size, verbose= verbose)
     return res
 
 def save_model(file_path, for_deployment= False):
