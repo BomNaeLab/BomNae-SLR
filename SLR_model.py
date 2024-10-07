@@ -193,31 +193,36 @@ def reinit_model():
 # def evaluate(x_test, y_test, batch_size):
 #     return model.evaluate(x_test, y_test, batch_size)
 
-def save_model(file_path, for_deployment= False):
-    global model, checkpoint, checkpoint_manager
-    if for_deployment:
-        # TODO
-        pass
-    else:
-        if checkpoint_manager is None:
-            checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
-            checkpoint_manager = tf.train.CheckpointManager(checkpoint, file_path, max_to_keep=None)
-        checkpoint_manager.save()
-        # tf.saved_model.save(model, file_path)
+# def save_model(file_path, for_deployment= False):
+#     global model, checkpoint, checkpoint_manager
+#     if for_deployment:
+#         # TODO
+#         pass
+#     else:
+#         if checkpoint_manager is None:
+#             checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
+#             checkpoint_manager = tf.train.CheckpointManager(checkpoint, file_path, max_to_keep=None)
+#         checkpoint_manager.save()
+#         # tf.saved_model.save(model, file_path)
         
 
+# def load_model(file_path):
+#     global model, checkpoint, checkpoint_manager
+#     # model = tf.saved_model.load(file_path)
+#     if checkpoint_manager is None:
+#             checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
+#             checkpoint_manager = tf.train.CheckpointManager(checkpoint, file_path, max_to_keep=None)
+#     latest_checkpoint = checkpoint_manager.latest_checkpoint
+#     if latest_checkpoint:
+#         checkpoint.restore(latest_checkpoint)
+#         print(f"Restored from {latest_checkpoint}")
+#     else:
+#         print("No checkpoint found, training from scratch.")
+#     return model
+
 def load_model(file_path):
-    global model, checkpoint, checkpoint_manager
-    # model = tf.saved_model.load(file_path)
-    if checkpoint_manager is None:
-            checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
-            checkpoint_manager = tf.train.CheckpointManager(checkpoint, file_path, max_to_keep=None)
-    latest_checkpoint = checkpoint_manager.latest_checkpoint
-    if latest_checkpoint:
-        checkpoint.restore(latest_checkpoint)
-        print(f"Restored from {latest_checkpoint}")
-    else:
-        print("No checkpoint found, training from scratch.")
+    global model
+    model = keras.models.load_model(file_path)
     return model
 
 # the part that doesnt get executed when imported
