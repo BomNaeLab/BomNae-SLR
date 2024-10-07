@@ -73,10 +73,9 @@ for person in os.listdir(json_folder_path):
                 except json.JSONDecodeError as e:
                     print(f"Error reading {file_path}: {e}")
                     break
-            label=[name]
-            check=[count,int(person)]
+            label=[count,int(person),name]
             word_output_path = os.path.join(person_output_path, f'{label[0]}.npz')
-            np.savez(word_output_path, wordCoordL=wordCoordL, wordCoordR=wordCoordR, wordCoordP=wordCoordP, label=label, check=check)
+            np.savez(word_output_path, wordCoordL=wordCoordL, wordCoordR=wordCoordR, wordCoordP=wordCoordP, label=label)
             print(f"Saved {word_output_path}")
             count+=1
         else:
@@ -89,16 +88,24 @@ def load_data(person,word):
     wordCoordR = data['wordCoordR']
     wordCoordP = data['wordCoordP']
     label = data['label']
-    check = data['check']
 
-    return wordCoordL, wordCoordR, wordCoordP, label, check
+    return wordCoordL, wordCoordR, wordCoordP, label
 
 
 def load_word(person, start, num):
-    words = []
+    coordLs = []
+    coordRs = []
+    coordPs = []
+    labels = []
+    checks = []
     for WNum in range(start, start + num):
         wordCoordL, wordCoordR, wordCoordP, label = load_data(person, WNum)
-        w
-    return words
+        coordLs.append(wordCoordL)
+        coordRs.append(wordCoordR)
+        coordPs.append(wordCoordP)
+        labels.append(int(label[0]))
+        checks.append((label[1:2]))
+
+    return coordLs, coordRs, coordPs, labels, checks
 
 
