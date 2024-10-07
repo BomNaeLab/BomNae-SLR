@@ -1,5 +1,5 @@
-#train_dir = 'D:/signData'
-train_dir = '../data/signData'
+train_dir = 'G:/signData'
+#train_dir = '../data/signData'
 output_dir = f"{train_dir}/nptxt"
 json_folder_path = f'{train_dir}/train/label/landmark'
 morpheme_path = f'{train_dir}/train/label/morpheme'
@@ -9,16 +9,32 @@ import json
 import numpy as np
 
 
-person_blacklist = []
+person_list=[{"0":"0"}]
+person_blacklist=[]
+start_person="17"
 for person in os.listdir(json_folder_path):
+    if int(person) < int(start_person):
+        continue
     person_output_path = os.path.join(output_dir, str(int(person)))
     os.makedirs(person_output_path, exist_ok=True)
-    count = 1
-    word_list = []
-
-    for word_coords, word_morpheme in zip(os.listdir(os.path.join(json_folder_path, person)),
-                                          os.listdir(os.path.join(morpheme_path, person))):
-        if "F" in word_coords:
+    count=1
+    word_list=[]
+    for word_coords,word_morpheme in zip(os.listdir(os.path.join(json_folder_path, person)),os.listdir(os.path.join(morpheme_path, person))):
+        if "F" in word_morpheme:
+            file_path = os.path.join(morpheme_path, person, word_morpheme)
+            morpheme_file_path = os.path.join(morpheme_path, person, word_morpheme)
+            with open(morpheme_file_path, 'r', encoding="UTF8") as morpheme_file:
+                data = json.load(morpheme_file)
+                try:
+                    name = data['data'][0]['attributes'][0]['name']
+                    # word_list.append({data['metaData']['name'][7:15]:name})
+                except IndexError as e:
+                    person_blacklist.append({person: data['metaData']['name'][7:15]})
+                    name=False
+                    # word_list.append({data['metaData']['name'][7:15]:None})
+                    print(f"Error reading {morpheme_file_path}: {e}")
+                    continue
+        if "F" in word_coords and name is not False:
             wordCoordL = np.empty((0, 4, 5, 3))
             wordCoordR = np.empty((0, 4, 5, 3))
             wordCoordP = np.empty((0, 3, 10))
@@ -48,57 +64,41 @@ for person in os.listdir(json_folder_path):
 
                         preFrameCoordP = preFrameCoordP[[i for i in range(19) if (0 <= i <= 7) or (17 <= i <= 18)]]
 
-                        frameCoordL = preFrameCoordL.reshape(5, 4, 3).transpose(1, 0, 2)[::-1]
-                        frameCoordR = preFrameCoordR.reshape(5, 4, 3).transpose(1, 0, 2)[::-1]
-                        frameCoordP = preFrameCoordP.T
+                        frameCoordL=preFrameCoordL.reshape(5,4,3).transpose(1,0,2)[::-1]
+                        frameCoordR=preFrameCoordR.reshape(5,4,3).transpose(1,0,2)[::-1]
+                        frameCoordP=preFrameCoordP.T
                         wordCoordL = np.append(wordCoordL, [frameCoordL], axis=0)
                         wordCoordR = np.append(wordCoordR, [frameCoordR], axis=0)
                         wordCoordP = np.append(wordCoordP, [frameCoordP], axis=0)
                 except json.JSONDecodeError as e:
                     print(f"Error reading {file_path}: {e}")
                     break
-            if "F" in word_morpheme:
-                file_path = os.path.join(morpheme_path, person, word_morpheme)
-                morpheme_file_path = os.path.join(morpheme_path, person, word_morpheme)
-                with open(morpheme_file_path, 'r', encoding="UTF8") as morpheme_file:
-                    data = json.load(morpheme_file)
-                    try:
-                        name = data['data'][0]['attributes'][0]['name']
-                        # word_list.append({data['metaData']['name'][7:15]:name})
-                    except IndexError as e:
-                        name = None
-                        person_blacklist.append({person: data['metaData']['name'][7:15]})
-                        # word_list.append({data['metaData']['name'][7:15]:None})
-                        print(f"Error reading {morpheme_file_path}: {e}")
-                        continue
-            label = [count, int(person), name]
+            label=[name]
+            check=[count,int(person)]
             word_output_path = os.path.join(person_output_path, f'{label[0]}.npz')
-            np.savez(word_output_path, wordCoordL=wordCoordL, wordCoordR=wordCoordR, wordCoordP=wordCoordP, label=label)
+            np.savez(word_output_path, wordCoordL=wordCoordL, wordCoordR=wordCoordR, wordCoordP=wordCoordP, label=label, check=check)
             print(f"Saved {word_output_path}")
-            count += 1
+            count+=1
+        else:
+            continue
 
-
-def load_data(person, word):
-    path = f"{output_dir}/{person}/{word}.npz"
+def load_data(person,word):
+    path=f"{output_dir}/{person}/{word}.npz"
     data = np.load(path)
     wordCoordL = data['wordCoordL']
     wordCoordR = data['wordCoordR']
     wordCoordP = data['wordCoordP']
     label = data['label']
+    check = data['check']
 
-    return wordCoordL, wordCoordR, wordCoordP, label
+    return wordCoordL, wordCoordR, wordCoordP, label, check
 
 
 def load_word(person, start, num):
     words = []
     for WNum in range(start, start + num):
         wordCoordL, wordCoordR, wordCoordP, label = load_data(person, WNum)
-        words.append([wordCoordL, wordCoordR, wordCoordP, label])
+        w
     return words
-
-# todo
-# 아래 코드를 함수화 , 포문돌려서 한번에 다 불러오기
-# 함수에 프레임 갯수(영상길이) 호출 가능하게 구현
-# 한 단어 내에서 호출할떄 6개의 프레임씩 겹쳐서 호출 하는 기능 구현
 
 
