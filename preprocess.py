@@ -101,8 +101,8 @@ def load_data(file_name):
     wordCoordR = data['wordCoordR']
     wordCoordP = data['wordCoordP']
     ans = data['label'][2]
+    ans = ans.replace('\n', '')
     label = words_dicts[ans]
-    print(ans)
     return wordCoordL, wordCoordR, wordCoordP, label
 
 
