@@ -130,8 +130,8 @@ class PoseModel(Model):
 
 # the main model class
 class SLRModel(Model):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.left_hand_model = HandModel(kernel_size = hand_kernel_size, filters = hand_filter_size, strides=hand_stride)
         self.right_hand_model = HandModel(kernel_size = hand_kernel_size, filters = hand_filter_size, strides=hand_stride)
         self.pose_model = PoseModel(kernel_size = pose_kernel_size, filters=pose_filter_size, dense_size = pose_dense_size)
@@ -224,6 +224,11 @@ def load_model(file_path):
     global model
     model = keras.models.load_model(file_path)
     return model
+
+def convert_to_dataset(x_train, y_train, batch_size):
+    dataset_raw = tf.data.Dataset.from_tensor_slices((x_train, y_train))
+    dataset = dataset_raw.shuffle(buffer_size=len(x_train)).padded_batch(batch_size, drop_remainder=True)
+    return dataset
 
 # the part that doesnt get executed when imported
 if __name__ == "__main__":
