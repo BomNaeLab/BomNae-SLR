@@ -7,9 +7,6 @@
     <list default="true" id="46829589-a91b-45fc-afc8-bd1d7046688d" name="변경" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/preprocess.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/preprocess.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/preprocess.py" beforeDir="false" afterPath="$PROJECT_DIR$/preprocess.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/training_main.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/training_main.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/wordtonum.json" beforeDir="false" afterPath="$PROJECT_DIR$/wordtonum.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -142,7 +139,8 @@
       <workItem from="1728272679712" duration="545000" />
       <workItem from="1728316729449" duration="706000" />
       <workItem from="1728353024349" duration="12799000" />
-      <workItem from="1728368345300" duration="2306000" />
+      <workItem from="1728368345300" duration="3829000" />
+      <workItem from="1728424777649" duration="1920000" />
     </task>
     <servers />
   </component>
