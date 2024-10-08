@@ -4,7 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="46829589-a91b-45fc-afc8-bd1d7046688d" name="변경" comment="" />
+    <list default="true" id="46829589-a91b-45fc-afc8-bd1d7046688d" name="변경" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/preprocess.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/preprocess.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/preprocess.py" beforeDir="false" afterPath="$PROJECT_DIR$/preprocess.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/training_main.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/training_main.ipynb" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -134,6 +140,8 @@
       <workItem from="1728266357491" duration="112000" />
       <workItem from="1728266710118" duration="4546000" />
       <workItem from="1728272679712" duration="545000" />
+      <workItem from="1728316729449" duration="706000" />
+      <workItem from="1728353024349" duration="12331000" />
     </task>
     <servers />
   </component>

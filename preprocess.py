@@ -8,16 +8,16 @@ import os
 import json
 import numpy as np
 
+def getoutputdir():
+    return output_dir
 
-person_list=[{"0":"0"}]
-person_blacklist=[]
+
 start_person="17"
 for person in os.listdir(json_folder_path):
     if int(person) < int(start_person):
         continue
     person_output_path = os.path.join(output_dir, str(int(person)))
     os.makedirs(person_output_path, exist_ok=True)
-    count=1
     word_list=[]
     for word_coords,word_morpheme in zip(os.listdir(os.path.join(json_folder_path, person)),os.listdir(os.path.join(morpheme_path, person))):
         if "F" in word_morpheme:
@@ -29,7 +29,6 @@ for person in os.listdir(json_folder_path):
                     name = data['data'][0]['attributes'][0]['name']
                     # word_list.append({data['metaData']['name'][7:15]:name})
                 except IndexError as e:
-                    person_blacklist.append({person: data['metaData']['name'][7:15]})
                     name=False
                     # word_list.append({data['metaData']['name'][7:15]:None})
                     print(f"Error reading {morpheme_file_path}: {e}")
@@ -38,6 +37,7 @@ for person in os.listdir(json_folder_path):
             wordCoordL = np.empty((0, 4, 5, 3))
             wordCoordR = np.empty((0, 4, 5, 3))
             wordCoordP = np.empty((0, 3, 10))
+            word_num=int(word_coords[11:15])
             for frame in os.listdir(os.path.join(json_folder_path, person, word_coords)):
                 file_path = os.path.join(json_folder_path, person, word_coords, frame)
                 try:
@@ -73,23 +73,38 @@ for person in os.listdir(json_folder_path):
                 except json.JSONDecodeError as e:
                     print(f"Error reading {file_path}: {e}")
                     break
-            label=[count,int(person),name]
+            label=[word_num,int(person),name]
             word_output_path = os.path.join(person_output_path, f'{label[0]}.npz')
             np.savez(word_output_path, wordCoordL=wordCoordL, wordCoordR=wordCoordR, wordCoordP=wordCoordP, label=label)
             print(f"Saved {word_output_path}")
-            count+=1
         else:
             continue
 
-def load_data(person,word):
-    path=f"{output_dir}/{person}/{word}.npz"
+# def load_data(person,word):
+#     path=f"{output_dir}/{person}/{word}.npz"
+#     data = np.load(path)
+#     wordCoordL = data['wordCoordL']
+#     wordCoordR = data['wordCoordR']
+#     wordCoordP = data['wordCoordP']
+#     label = data['label']
+#
+
+#     return wordCoordL, wordCoordR, wordCoordP, label
+with open('wordtonum.json', 'r', encoding="UTF8") as json_file:
+    words_dicts = json.load(json_file)
+
+def load_data(file_name):
+    path=f"{output_dir}/{file_name}"
     data = np.load(path)
+
     wordCoordL = data['wordCoordL']
     wordCoordR = data['wordCoordR']
     wordCoordP = data['wordCoordP']
-    label = data['label']
-
+    ans = data['label'][2]
+    label = words_dicts[ans]
+    print(ans)
     return wordCoordL, wordCoordR, wordCoordP, label
+
 
 
 def load_word(person, start, num):
@@ -104,7 +119,7 @@ def load_word(person, start, num):
         coordRs.append(wordCoordR)
         coordPs.append(wordCoordP)
         labels.append(int(label[0]))
-        checks.append((label[1:2]))
+        checks.append((label[1:3]))
 
     return coordLs, coordRs, coordPs, labels, checks
 
