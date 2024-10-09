@@ -8,7 +8,7 @@ import numpy as np
 data_dir = 'G:/signData'
 train_dir = os.path.join(data_dir,'train')
 val_dir = os.path.join(data_dir,'vaild')
-output_dir = os.path.join(data_dir,"nptxt_del")
+output_dir = os.path.join(data_dir,"nptxt_val")
 train_landmark_dir = os.path.join(train_dir,'label','landmark')
 train_morpheme_dir = os.path.join(train_dir,'label','morpheme')
 val_landmark_dir = os.path.join(val_dir,'landmark')
