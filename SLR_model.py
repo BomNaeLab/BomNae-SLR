@@ -178,6 +178,54 @@ def reinit_model():
     model.compile(optimizer = optimizer, loss=loss, metrics=[metric])
     return model
 
+
+# utility functions
+
+def bin2num(bin_arr):
+    # big endian
+    # lower index > higher exponent
+    num = 0
+    for val in bin_arr:
+        num = (num << 1) | val
+    return num
+
+# def num2bin(num, arr_len = -1):
+#     # big endian
+#     # lower index > higher exponent
+#     bin_arr = [int(x) for x in bin(num)[2:]]
+#     diff = arr_len - len(bin_arr)
+#     if diff < 1:
+#         return bin_arr
+#     else:
+#         pad = [0] * diff
+#         return pad+bin_arr
+    
+def num_arr2bin(num_arr, out_len = -1):
+    # big endian
+    # lower index > higher exponent
+    res = []
+    for num in num_arr:
+        str_list = list(np.binary_repr(num).zfill(out_len))
+        bin_arr = np.array(str_list, dtype=np.float32)
+        res.append(bin_arr)
+    return np.array(res)
+
+def serialize(vids, stride = 1):
+    """input shape: (load_size, frames)\n
+    ouput shape: (load_size, input_seq_size, 63 or 32, frames)"""
+    each_size = []
+    x_res = []
+    for vid in vids:
+        window_len = 0
+        start = 0
+        while (start + 63) < len(vid):
+            x_res.append(vid[start: start+63: stride])
+            window_len += 1
+            start += 6
+        each_size.append(window_len)
+    return np.array(x_res), each_size
+
+
 # def set_batch_size(size = 16):
 #     global batch_size
 #     batch_size = size
