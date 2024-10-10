@@ -230,19 +230,24 @@ def num_arr2bin(num_arr, out_len = -1):
         res.append(bin_arr)
     return np.array(res)
 
-def serialize(vids, stride = 1):
+def serialize(vids, stride = 1, loss_weights = None):
     """input shape: (load_size, frames)\n
     ouput shape: (load_size, input_seq_size, 63 or 32, frames)"""
     each_size = []
     x_res = []
+    weight_res = []
     for vid in vids:
-        window_len = 0
+        window_count = 0
         start = 0
         while (start + 63) < len(vid):
             x_res.append(vid[start: start+63: stride])
-            window_len += 1
+            window_count += 1
             start += 6
-        each_size.append(window_len)
+            if loss_weights is not None:
+                weight_res.append(loss_weights[start+63-1])
+        each_size.append(window_count)
+    if loss_weights is not None:
+        return np.array(x_res), each_size, weight_res
     return np.array(x_res), each_size
 
 
