@@ -189,6 +189,17 @@ def bin2num(bin_arr):
         num = (num << 1) | val
     return num
 
+def bin2d_to_num(bin_arr_arr):
+    # big endian
+    # lower index > higher exponent
+    num_arr = []
+    for bin_arr in bin_arr_arr:
+        num = 0
+        for val in bin_arr:
+            num = (num << 1) | val
+        num_arr.append(num)
+    return num_arr
+
 # def num2bin(num, arr_len = -1):
 #     # big endian
 #     # lower index > higher exponent
