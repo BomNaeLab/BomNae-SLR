@@ -39,13 +39,22 @@ combined_dense2_size = 128
 combined_output_size = 12
 # optimizer
 learning_rate = 0.0001
-loss = keras.losses.BinaryCrossentropy(from_logits=False)
+# loss = keras.losses.BinaryCrossentropy(from_logits=False)
 metric = keras.metrics.BinaryAccuracy()
 
 
 # custom loss
 # TODO
-
+# class WeightedLoss(keras.Loss):
+#     def __init__():
+#         super().__init__()
+        
+def weighted_bce(y_true, y_pred):
+    y_true_value = y_true[:,0]
+    weight = y_true[:,1]
+    bce = keras.losses.binary_crossentropy(y_true_value, y_pred, from_logits=False)
+    return tf.reduce_mean(weight * bce)
+    
 
 
 # custom layer definition
@@ -162,7 +171,7 @@ class SLRModel(Model):
 model = SLRModel()
 optimizer = optimizers.Adam(learning_rate = learning_rate)
 # model.build((1,))
-model.compile(optimizer = optimizer, loss=loss, metrics=[metric])
+model.compile(optimizer = optimizer, loss=weighted_bce, metrics=[metric])
 
 def get_model():
     return model
@@ -175,7 +184,7 @@ def reinit_model():
     model = SLRModel()
     optimizer = optimizers.Adam(learning_rate = learning_rate)
     # model.build((1,))
-    model.compile(optimizer = optimizer, loss=loss, metrics=[metric])
+    model.compile(optimizer = optimizer, loss=weighted_bce, metrics=[metric])
     return model
 
 
