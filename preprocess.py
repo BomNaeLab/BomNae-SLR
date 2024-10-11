@@ -36,7 +36,7 @@ def load_data(file_name,type="train"):
     wordCoordR = data['wordCoordR']
     wordCoordP = data['wordCoordP']
     #단어 뜻 호출
-    ans = data['label'][0]
+    ans = data['label'][2]
     # ans = ans.replace('\n', '')
     #해당 단어의 value 호출
     label = words_dicts[ans]
