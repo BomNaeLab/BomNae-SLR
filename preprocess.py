@@ -37,8 +37,10 @@ def load_data(file_name,type="train"):
     wordCoordP = data['wordCoordP']
     #단어 뜻 호출
     ans = data['label'][2]
-    # ans = ans.replace('\n', '')
+    ans = ans.replace('\n', '')
     #해당 단어의 value 호출
+    if ans[-1].isdigit():
+        ans = ans[:-1]
     label = words_dicts[ans]
     weight = weight_data['weight']
     return wordCoordL, wordCoordR, wordCoordP, label ,weight
