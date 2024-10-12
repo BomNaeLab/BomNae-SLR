@@ -50,6 +50,7 @@ metric = keras.metrics.BinaryAccuracy()
 #         super().__init__()
         
 def weighted_bce(y_true, y_pred):
+    print('yt:',y_true[1])
     y_true_value = y_true[:,0]
     weight = y_true[:,1]
     bce = keras.losses.binary_crossentropy(y_true_value, y_pred, from_logits=False)
@@ -230,23 +231,23 @@ def num_arr2bin(num_arr, out_len = -1):
         res.append(bin_arr)
     return np.array(res)
 
-def serialize(vids, stride = 1, loss_weights = None):
+def serialize(vids, stride = 1, loss_weights_list = None):
     """input shape: (load_size, frames)\n
     ouput shape: (load_size, input_seq_size, 63 or 32, frames)"""
     each_size = []
     x_res = []
     weight_res = []
-    for vid in vids:
+    for i, vid in enumerate(vids):
         window_count = 0
         start = 0
         while (start + 63) < len(vid):
             x_res.append(vid[start: start+63: stride])
             window_count += 1
-            if loss_weights is not None:
-                weight_res.append(loss_weights[start+63-1])
+            if loss_weights_list is not None:
+                weight_res.append(loss_weights_list[i][start+63-1])
             start += 6
         each_size.append(window_count)
-    if loss_weights is not None:
+    if loss_weights_list is not None:
         return np.array(x_res), each_size, weight_res
     return np.array(x_res), each_size
 
