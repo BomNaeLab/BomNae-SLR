@@ -242,9 +242,9 @@ def serialize(vids, stride = 1, loss_weights = None):
         while (start + 63) < len(vid):
             x_res.append(vid[start: start+63: stride])
             window_count += 1
-            start += 6
             if loss_weights is not None:
                 weight_res.append(loss_weights[start+63-1])
+            start += 6
         each_size.append(window_count)
     if loss_weights is not None:
         return np.array(x_res), each_size, weight_res
