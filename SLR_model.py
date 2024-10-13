@@ -39,23 +39,8 @@ combined_dense2_size = 128
 combined_output_size = 12
 # optimizer
 learning_rate = 0.0001
-# loss = keras.losses.BinaryCrossentropy(from_logits=False)
-metric = keras.metrics.BinaryAccuracy()
-
-
-# custom loss
-# TODO
-# class WeightedLoss(keras.Loss):
-#     def __init__():
-#         super().__init__()
-        
-def weighted_bce(y_true, y_pred):
-    print('yt:',y_true[1])
-    y_true_value = y_true[:,0]
-    weight = y_true[:,1]
-    bce = keras.losses.binary_crossentropy(y_true_value, y_pred, from_logits=False)
-    return tf.reduce_mean(weight * bce)
-    
+bce_loss = keras.losses.BinaryCrossentropy(from_logits=False)
+bin_acc_metric = keras.metrics.BinaryAccuracy()
 
 
 # custom layer definition
@@ -172,7 +157,7 @@ class SLRModel(Model):
 model = SLRModel()
 optimizer = optimizers.Adam(learning_rate = learning_rate)
 # model.build((1,))
-model.compile(optimizer = optimizer, loss=weighted_bce, metrics=[metric])
+model.compile(optimizer = optimizer, loss=bce_loss, metrics=[bin_acc_metric])
 
 def get_model():
     return model
@@ -180,12 +165,12 @@ def get_model():
 # def model_summary():
 #     return model.summary()
 
-def reinit_model():
+def reinit_model(run_eagerly = False):
     """reinitialize the model, reloads and resets the model"""
     model = SLRModel()
     optimizer = optimizers.Adam(learning_rate = learning_rate)
     # model.build((1,))
-    model.compile(optimizer = optimizer, loss=weighted_bce, metrics=[metric])
+    model.compile(optimizer = optimizer, loss=bce_loss, metrics=[bin_acc_metric], run_eagerly = run_eagerly)
     return model
 
 
@@ -251,56 +236,16 @@ def serialize(vids, stride = 1, loss_weights_list = None):
         return np.array(x_res), each_size, weight_res
     return np.array(x_res), each_size
 
-
-# def set_batch_size(size = 16):
-#     global batch_size
-#     batch_size = size
-
-# def train(x_train, y_train, epochs, batch_size):
-#     hist = model.fit(x_train, y_train, epochs = epochs, batch_size= batch_size)
-#     return hist
-
-# def predict(inputs, batch_size, verbose='auto'):
-#     res = model.predict(inputs, batch_size, verbose= verbose)
-#     return res
-
-# def evaluate(x_test, y_test, batch_size):
-#     return model.evaluate(x_test, y_test, batch_size)
-
-# def save_model(file_path, for_deployment= False):
-#     global model, checkpoint, checkpoint_manager
-#     if for_deployment:
-#         # TODO
-#         pass
-#     else:
-#         if checkpoint_manager is None:
-#             checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
-#             checkpoint_manager = tf.train.CheckpointManager(checkpoint, file_path, max_to_keep=None)
-#         checkpoint_manager.save()
-#         # tf.saved_model.save(model, file_path)
-        
-
-# def load_model(file_path):
-#     global model, checkpoint, checkpoint_manager
-#     # model = tf.saved_model.load(file_path)
-#     if checkpoint_manager is None:
-#             checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
-#             checkpoint_manager = tf.train.CheckpointManager(checkpoint, file_path, max_to_keep=None)
-#     latest_checkpoint = checkpoint_manager.latest_checkpoint
-#     if latest_checkpoint:
-#         checkpoint.restore(latest_checkpoint)
-#         print(f"Restored from {latest_checkpoint}")
-#     else:
-#         print("No checkpoint found, training from scratch.")
-#     return model
-
 def load_model(file_path):
     global model
     model = keras.models.load_model(file_path)
     return model
 
-def convert_to_dataset(x_train, y_train, batch_size):
-    dataset_raw = tf.data.Dataset.from_tensor_slices((x_train, y_train))
+def convert_to_dataset(x_train, y_train, batch_size = 1, sample_weights=None):
+    if sample_weights is not None:
+        dataset_raw = tf.data.Dataset.from_tensor_slices((x_train, y_train, sample_weights))
+    else:
+        dataset_raw = tf.data.Dataset.from_tensor_slices((x_train, y_train))
     dataset = dataset_raw.shuffle(buffer_size=len(x_train)).padded_batch(batch_size, drop_remainder=True)
     return dataset
 
