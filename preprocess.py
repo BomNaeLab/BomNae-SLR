@@ -4,7 +4,7 @@ import os
 import json
 import numpy as np
 
-data_dir = 'G:/signData'
+data_dir = 'signData'
 
 train_dir = os.path.join(data_dir,'train')
 val_dir = os.path.join(data_dir,'valid')
@@ -28,9 +28,9 @@ with open('wordtonum.json', 'r', encoding="UTF8") as json_file:
 
 def load_data(file_name,type="train"):
     path=f"{getoutputdir(type)}/{file_name}"
-    weight_path = f"{weight_dir}/{file_name}"
+
     data = np.load(path)
-    weight_data = np.load(weight_path)
+
     #좌표값 로드
     wordCoordL = data['wordCoordL']
     wordCoordR = data['wordCoordR']
@@ -42,8 +42,14 @@ def load_data(file_name,type="train"):
     if ans[-1].isdigit():
         ans = ans[:-1]
     label = words_dicts[ans]
-    weight = weight_data['weight']
-    return wordCoordL, wordCoordR, wordCoordP, label ,weight
+    if type=='train':
+        weight_path = f"{weight_dir}/{file_name}"
+        weight_data = np.load(weight_path)
+        weight = weight_data['weight']
+        return wordCoordL, wordCoordR, wordCoordP, label ,weight
+    else:
+        return wordCoordL, wordCoordR, wordCoordP, label
+
 
 
 
