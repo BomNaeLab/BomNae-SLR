@@ -13,9 +13,12 @@ from keras import initializers
 #------------------------------------------------------------------------------------#
 
 # NOTE
-# model detail
-#
-#
+# difference between legacy model
+#----------------------------------
+# one hot encoding
+# ^ changed loss and activation function accordingly
+# removed one dense layer from the final part
+# increased learning rate 
 
 # global variables
 model = None
@@ -35,11 +38,11 @@ pose_kernel_size = (17,3)
 pose_stride = (1,1)
 # combined FC
 combined_dense1_size = 256
-combined_dense2_size = 128
-combined_output_size = 12
+# combined_dense2_size = 128
+combined_output_size = 3000
 # optimizer
-learning_rate = 0.0001
-bce_loss = keras.losses.BinaryCrossentropy(from_logits=False)
+learning_rate = 0.0005
+cce_loss = keras.losses.CategoricalCrossentropy(from_logits=False)
 bin_acc_metric = keras.metrics.BinaryAccuracy()
 
 
@@ -131,9 +134,7 @@ class SLRModel(Model):
         self.right_hand_model = HandModel(kernel_size = hand_kernel_size, filters = hand_filter_size, strides=hand_stride)
         self.pose_model = PoseModel(kernel_size = pose_kernel_size, filters=pose_filter_size, dense_size = pose_dense_size)
         self.dense1 = layers.Dense(combined_dense1_size, activation='gelu', kernel_initializer = he_init)
-        self.dense2 = layers.Dense(combined_dense2_size, activation='gelu', kernel_initializer = he_init)
-        # TODO 4096 max, check EXACT data size
-        self.dense_out = layers.Dense(combined_output_size, activation='sigmoid')
+        self.dense_out = layers.Dense(combined_output_size, activation='softmax')
         self.flat = layers.Flatten()
 
     def call(self, inputs):
@@ -148,7 +149,6 @@ class SLRModel(Model):
         x = tf.concat([l_res, r_res, p_res], axis = 1)
         # current_shape: (batch, hand_output_size * 2 + pose_output_size)
         x = self.dense1(x)
-        x = self.dense2(x)
         return self.dense_out(x)
         
 
@@ -157,7 +157,7 @@ class SLRModel(Model):
 model = SLRModel()
 optimizer = optimizers.Adam(learning_rate = learning_rate)
 # model.build((1,))
-model.compile(optimizer = optimizer, loss=bce_loss, metrics=[bin_acc_metric])
+model.compile(optimizer = optimizer, loss=cce_loss, metrics=[bin_acc_metric])
 
 def get_model():
     return model
@@ -170,51 +170,19 @@ def reinit_model(run_eagerly = False):
     model = SLRModel()
     optimizer = optimizers.Adam(learning_rate = learning_rate)
     # model.build((1,))
-    model.compile(optimizer = optimizer, loss=bce_loss, metrics=[bin_acc_metric], run_eagerly = run_eagerly)
+    model.compile(optimizer = optimizer, loss=cce_loss, metrics=[bin_acc_metric], run_eagerly = run_eagerly)
     return model
 
 
 # utility functions
+def encode_onehot2d(num_arr):
+    "encode a number array into onehot 2d array"
+    return tf.raw_ops.OneHot(indices = num_arr, depth = combined_output_size, on_value = 1.0, off_value = 0.0)
 
-def bin2num(bin_arr):
-    # big endian
-    # lower index > higher exponent
-    num = 0
-    for val in bin_arr:
-        num = (num << 1) | val
-    return num
+def decode_onehot2d(onehot_2d):
+    "decode a onehot 2d array into a number array"
+    return tf.argmax(onehot_2d, axis=-1)
 
-def bin2d_to_num(bin_arr_arr):
-    # big endian
-    # lower index > higher exponent
-    num_arr = []
-    for bin_arr in bin_arr_arr:
-        num = 0
-        for val in bin_arr:
-            num = (num << 1) | val
-        num_arr.append(num)
-    return num_arr
-
-# def num2bin(num, arr_len = -1):
-#     # big endian
-#     # lower index > higher exponent
-#     bin_arr = [int(x) for x in bin(num)[2:]]
-#     diff = arr_len - len(bin_arr)
-#     if diff < 1:
-#         return bin_arr
-#     else:
-#         pad = [0] * diff
-#         return pad+bin_arr
-    
-def num_arr2bin(num_arr, out_len = -1):
-    # big endian
-    # lower index > higher exponent
-    res = []
-    for num in num_arr:
-        str_list = list(np.binary_repr(num).zfill(out_len))
-        bin_arr = np.array(str_list, dtype=np.float32)
-        res.append(bin_arr)
-    return np.array(res)
 
 def serialize(vids, stride = 1, loss_weights_list = None):
     """input shape: (load_size, frames)\n
