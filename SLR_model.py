@@ -37,7 +37,7 @@ pose_dense_size = 3
 pose_kernel_size = (17,3)
 pose_stride = (1,1)
 # combined FC
-# combined_dense1_size = 256
+combined_dense1_size = 256
 # combined_dense2_size = 128
 combined_output_size = 3000
 # optimizer
@@ -134,9 +134,8 @@ class SLRModel(Model):
         self.left_hand_model = HandModel(kernel_size = hand_kernel_size, filters = hand_filter_size, strides=hand_stride)
         self.right_hand_model = HandModel(kernel_size = hand_kernel_size, filters = hand_filter_size, strides=hand_stride)
         self.pose_model = PoseModel(kernel_size = pose_kernel_size, filters=pose_filter_size, dense_size = pose_dense_size)
-        # self.dense1 = layers.Dense(combined_dense1_size, activation='gelu', kernel_initializer = he_init)
-        self.dense_out = layers.Dense(combined_output_size, activation='gelu', kernel_initializer = he_init)
-        self.soft_out = layers.Activation('softmax')
+        self.dense1 = layers.Dense(combined_dense1_size, activation='gelu', kernel_initializer = he_init)
+        self.dense_out = layers.Dense(combined_output_size, activation='softmax', kernel_initializer = he_init)
         self.flat = layers.Flatten()
 
     def call(self, inputs):
@@ -150,9 +149,8 @@ class SLRModel(Model):
         p_res = self.flat(p_res)
         x = tf.concat([l_res, r_res, p_res], axis = 1)
         # current_shape: (batch, hand_output_size * 2 + pose_output_size)
-        x = self.dense_out(x)
-        x = self.soft_out(x)
-        return x
+        x = self.dense1(x)
+        return self.dense_out(x)
         
 
 
