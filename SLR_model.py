@@ -43,7 +43,8 @@ combined_output_size = 3000
 # optimizer
 learning_rate = 0.0005
 cce_loss = keras.losses.CategoricalCrossentropy(from_logits=False)
-bin_acc_metric = keras.metrics.BinaryAccuracy()
+# bin_acc_metric = keras.metrics.BinaryAccuracy()
+cat_acc_metric = keras.metrics.CategoricalAccuracy()
 
 
 # custom layer definition
@@ -157,7 +158,7 @@ class SLRModel(Model):
 model = SLRModel()
 optimizer = optimizers.Adam(learning_rate = learning_rate)
 # model.build((1,))
-model.compile(optimizer = optimizer, loss=cce_loss, metrics=[bin_acc_metric])
+model.compile(optimizer = optimizer, loss=cce_loss, metrics=[cat_acc_metric])
 
 def get_model():
     return model
@@ -170,7 +171,7 @@ def reinit_model(run_eagerly = False):
     model = SLRModel()
     optimizer = optimizers.Adam(learning_rate = learning_rate)
     # model.build((1,))
-    model.compile(optimizer = optimizer, loss=cce_loss, metrics=[bin_acc_metric], run_eagerly = run_eagerly)
+    model.compile(optimizer = optimizer, loss=cce_loss, metrics=[cat_acc_metric], run_eagerly = run_eagerly)
     return model
 
 
