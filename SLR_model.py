@@ -135,7 +135,7 @@ class SLRModel(Model):
         self.right_hand_model = HandModel(kernel_size = hand_kernel_size, filters = hand_filter_size, strides=hand_stride)
         self.pose_model = PoseModel(kernel_size = pose_kernel_size, filters=pose_filter_size, dense_size = pose_dense_size)
         self.dense1 = layers.Dense(combined_dense1_size, activation='gelu', kernel_initializer = he_init)
-        self.dense_out = layers.Dense(combined_output_size, activation='softmax', kernel_initializer = he_init)
+        self.dense_out = layers.Dense(combined_output_size, activation='softmax')
         self.flat = layers.Flatten()
 
     def call(self, inputs):
