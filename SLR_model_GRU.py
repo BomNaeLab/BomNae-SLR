@@ -17,12 +17,13 @@ from keras import initializers
 #----------------------------------
 # (GRU over CNN) differences between one-hot model
 #----------------------------------:
+# replaced the last hidden dense layer with GRU
 # CNN temporal depth: fast 9, slow 5 frames
 # CNN slidable window size: 9, 5 frames (no sliding)
 # GRU overlap : 3, 2 frames each
+# hop: 6 , 3 frames each
 # serialize() output changed accordingly ^
-# GRU layer on hand, pose model output 
-# 
+# CNN depth in kernel_size changed accordingly ^
 #---------------------------------
 # (one-hot) difference between legacy model
 #----------------------------------: 
@@ -50,7 +51,7 @@ pose_dense_size = 3
 pose_kernel_size = (17,3)
 pose_stride = (1,1)
 # combined FC
-combined_dense1_size = 256
+GRU_unit_size = 256
 # combined_dense2_size = 128
 combined_output_size = 3000
 # optimizer
@@ -87,7 +88,7 @@ class HandModel(Model):
     # run it every 2 frames in order to give it 2 temporal stride
     """input shape: (batch, time, h, w, channels)
         output shape: (batch, convolved_time, convolved_h * convolved_w * filter_size)"""
-    def __init__(self, kernel_size = (33,3,3), filters= 1, strides = (2,1,1)):
+    def __init__(self, kernel_size = (9,3,3), filters= 1, strides = (2,1,1)):
         super().__init__()
         self.filters = filters
         self.conv21 = Conv2Plus1D(kernel_size = kernel_size, filters= filters, strides = strides)
@@ -107,7 +108,7 @@ class HandModel(Model):
 class PoseModel(Model):
     """input shape: (batch, time, channel, features)\n
         output shape: (batch, convolved_time, xyz_channel * filter_size)"""
-    def __init__(self, kernel_size = (17,3), filters = 1, dense_size = 3):
+    def __init__(self, kernel_size = (9,3), filters = 1, dense_size = 3):
         super().__init__()
         self.dense_size = dense_size
         self.dense_td = layers.TimeDistributed(layers.Dense(dense_size, activation='relu', kernel_initializer= he_init))
@@ -147,23 +148,29 @@ class SLRModel(Model):
         self.left_hand_model = HandModel(kernel_size = hand_kernel_size, filters = hand_filter_size, strides=hand_stride)
         self.right_hand_model = HandModel(kernel_size = hand_kernel_size, filters = hand_filter_size, strides=hand_stride)
         self.pose_model = PoseModel(kernel_size = pose_kernel_size, filters=pose_filter_size, dense_size = pose_dense_size)
-        self.dense1 = layers.Dense(combined_dense1_size, activation='gelu', kernel_initializer = he_init)
+        self.gru = layers.GRU(GRU_unit_size, return_state= True)
+        # self.dense1 = layers.Dense(combined_dense1_size, activation='gelu', kernel_initializer = he_init)
         self.dense_out = layers.Dense(combined_output_size, activation='softmax')
         self.flat = layers.Flatten()
 
-    def call(self, inputs):
+    def call(self, inputs, states= None, return_states = False, training= False):
         # inputs 0: L, 1: R, 2: Pose
         l_inputs, r_inputs, p_inputs = inputs
-        l_res = self.left_hand_model(l_inputs)
-        r_res = self.right_hand_model(r_inputs)
-        p_res = self.pose_model(p_inputs)
+        l_res = self.left_hand_model(l_inputs, training = training)
+        r_res = self.right_hand_model(r_inputs, training = training)
+        p_res = self.pose_model(p_inputs, training = training)
         l_res = self.flat(l_res)
         r_res = self.flat(r_res)
         p_res = self.flat(p_res)
         x = tf.concat([l_res, r_res, p_res], axis = 1)
         # current_shape: (batch, hand_output_size * 2 + pose_output_size)
-        x = self.dense1(x)
+        if states is None:
+            states = self.gru.get_initial_state(x)
+        x, states = self.gru(x, initial_state=states, training=training)
+        if return_states:
+            return self.dense_out(x), states
         return self.dense_out(x)
+        
         
 
 
@@ -180,7 +187,9 @@ def get_model():
 #     return model.summary()
 
 def reinit_model(run_eagerly = False):
+    global model
     """reinitialize the model, reloads and resets the model"""
+    keras.backend.clear_session()
     model = SLRModel()
     optimizer = optimizers.Adam(learning_rate = learning_rate)
     # model.build((1,))
@@ -200,20 +209,20 @@ def decode_onehot2d(onehot_2d):
 
 def serialize(vids, stride = 1, loss_weights_list = None):
     """input shape: (load_size, frames)\n
-    ouput shape: (load_size, input_seq_size, 63 or 32, frames)
-    ouput shape: (load_size, input_seq_size, 9 or 5, frames)"""
+    ouput shape: (load_size, input_seq_size, 9 or 5 depending on stride setting, frames)"""
     each_size = []
     x_res = []
     weight_res = []
     for i, vid in enumerate(vids):
         window_count = 0
         start = 0
-        while (start + 63) < len(vid):
-            x_res.append(vid[start: start+63: stride])
+        while (start + 9) < len(vid): # check if the end of this window goes over the end of the video
+            x_res.append(vid[start: start+9: stride])
             window_count += 1
             if loss_weights_list is not None:
-                weight_res.append(loss_weights_list[i][start+63-1])
+                weight_res.append(loss_weights_list[i][start+9-1])
             start += 6
+            # ^ hop frames
         each_size.append(window_count)
     if loss_weights_list is not None:
         return np.array(x_res), each_size, weight_res
