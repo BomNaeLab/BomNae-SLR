@@ -43,12 +43,12 @@ he_init = initializers.HeUniform()
 # Hyperparamerters
 # hand : conv3D
 hand_filter_size = 1
-hand_kernel_size = (33, 3, 3)
+hand_kernel_size = (9, 3, 3)
 hand_stride = (2,1,1)
 # pose: conv2D
 pose_filter_size = 1
 pose_dense_size = 3
-pose_kernel_size = (17,3)
+pose_kernel_size = (5,3)
 pose_stride = (1,1)
 # combined FC
 GRU_unit_size = 256
