@@ -131,11 +131,11 @@ class PoseModel(Model):
         y = self.conv2_y(tf.squeeze(xyz[1], axis= 1))
         z = self.conv2_z(tf.squeeze(xyz[2], axis= 1))
         conv_shape = x.shape
-        # shape: (batch, conv_time, 1, filter_size) -> (batch, conv_time, filter_size) -> (batch, conv_time, xyz_ch, filter_size)
+        # shape: (batch, conv_time(which is 1), 1, filter_size) -> (batch, filter_size) -> (batch, xyz_ch, filter_size)
         x = tf.squeeze(x)
         y = tf.squeeze(y)
         z = tf.squeeze(z)
-        temp = tf.stack([x, y, z], axis=2)
+        temp = tf.stack([x, y, z], axis=1)
         temp = layers.Reshape((conv_shape[1], 3 * conv_shape[3]))(temp) # 3 from x y z 3 channels
         return self.ln(temp, training = training)
         
