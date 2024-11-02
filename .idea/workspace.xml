@@ -6,7 +6,172 @@
   <component name="ChangeListManager">
     <list default="true" id="46829589-a91b-45fc-afc8-bd1d7046688d" name="변경" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/preprocess.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/preprocess.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-11-06.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-11-40.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-12-26.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-12-29.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-12-30.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-12-41.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-12-46.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-12-47.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-12-54.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-12-55.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-12-56.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-12-57.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-12-58.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-15-26.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-15-27.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-15-36.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-15-37.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_08-17-52.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-00-37.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-00-40.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-00-41.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-00-47.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-00-50.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-00-51.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-00-52.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-00-53.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-00-54.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-00-55.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-00-56.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-00-57.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-00-58.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-00-59.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-01-00.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-01-01.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-01-02.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-01-03.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-01-04.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-01-05.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-01-06.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-01-07.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-01-08.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-01-09.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_09-01-10.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_10-06-25.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_10-15-25.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_10-15-33.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_10-15-34.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_10-15-35.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_10-15-44.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_10-15-45.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_10-15-47.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_12-05-03.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_12-05-24.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_13-06-10.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_13-15-10.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_14-11-38.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_14-16-11.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_14-16-15.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_14-16-16.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_15-17-33.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-11-11.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-11-15.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-11-3001to05_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-11-3101to05_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-12-05_01to10_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-12-25_01to10_6time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-12-26_01to10_5time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-14-28_01to10_5time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-14-46_01to10_5time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-00_1_3time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-00_2_3time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-07_10_100epochs_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-07_11_100epochs_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-07_12_100epochs_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-07_13_100epochs_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-07_14_100epochs_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-07_15_100epochs_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-07_1_100epochs_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-07_2_100epochs_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-07_3_100epochs_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-07_4_100epochs_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-07_5_100epochs_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-07_6_100epochs_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-07_7_100epochs_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-07_8_100epochs_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/check_16-15-07_9_100epochs_1time.keras" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-11-06.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-11-40.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-12-26.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-12-29.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-12-30.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-12-41.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-12-46.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-12-47.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-12-54.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-12-55.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-12-56.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-12-57.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-12-58.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-15-26.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-15-27.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-15-36.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-15-37.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_08-17-52.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-00-37.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-00-40.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-00-41.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-00-47.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-00-50.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-00-51.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-00-52.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-00-53.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-00-54.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-00-55.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-00-56.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-00-57.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-00-58.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-00-59.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-01-00.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-01-01.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-01-02.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-01-03.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-01-04.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-01-05.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-01-06.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-01-07.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-01-08.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-01-09.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_09-01-10.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_10-06-25.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_10-15-25.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_10-15-33.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_10-15-34.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_10-15-35.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_10-15-44.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_10-15-45.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_10-15-47.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_12-05-03.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_12-05-24.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_12-05-57.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_13-06-10.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_13-15-10.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_13-18-11.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_14-11-37.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_14-11-38.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_14-16-11.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_14-16-15.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_14-16-16.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_14-23-00.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_15-17-33.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_15-17-55.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_15-18-13.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_15-23-40.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_16-10-42.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_16-10-56.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_16-11-11.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_16-11-15.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_16-11-31.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_16-12-05.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_16-12-26.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_16-14-28.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_16-14-46.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_16-15-00.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_16-15-07.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/hist_test.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/training_main.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/training_main.ipynb" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -93,6 +258,13 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\shd\Documents\capstone\BomNae-SLR" />
+      <recent name="C:\Users\shd\Documents\capstone\BomNae-SLR\saves\hist" />
+      <recent name="C:\Users\shd\Documents\capstone\BomNae-SLR\saves\ckpt" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -141,6 +313,7 @@
       <workItem from="1728353024349" duration="12799000" />
       <workItem from="1728368345300" duration="3829000" />
       <workItem from="1728424777649" duration="1920000" />
+      <workItem from="1730526559398" duration="84000" />
     </task>
     <servers />
   </component>
