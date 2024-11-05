@@ -165,9 +165,13 @@ class SLRModel(Model):
         p_res = self.flat(p_res)
         x = tf.concat([l_res, r_res, p_res], axis = 1)
         # current_shape: (batch, hand_output_size * 2 + pose_output_size)
+        x=tf.expand_dims(x,axis=1)
+        
         if states is None:
             states = self.gru.get_initial_state(x)
+            # states=[0]
         x, states = self.gru(x, initial_state=states, training=training)
+        print("input:"+x.shape)
         if return_states:
             return self.dense_out(x), states
         return self.dense_out(x)
