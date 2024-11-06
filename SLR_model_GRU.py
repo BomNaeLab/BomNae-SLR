@@ -149,12 +149,12 @@ class SLRModel(Model):
         self.right_hand_model = HandModel(kernel_size = hand_kernel_size, filters = hand_filter_size, strides=hand_stride)
         self.pose_model = PoseModel(kernel_size = pose_kernel_size, filters=pose_filter_size, dense_size = pose_dense_size)
         # self.gru = layers.GRU(GRU_unit_size, return_state= True)
-        self.gru = layers.RNN(layers.GRUCell(GRU_unit_size), return_state= True)
+        self.gru = layers.GRU(GRU_unit_size, stateful=True)
         # self.dense1 = layers.Dense(combined_dense1_size, activation='gelu', kernel_initializer = he_init)
         self.dense_out = layers.Dense(combined_output_size, activation='softmax')
         self.flat = layers.Flatten()
-
-    def call(self, inputs, states= None, return_states = False, training= False):
+    
+    def call(self, inputs, training= False):
         # inputs 0: L, 1: R, 2: Pose
         l_inputs, r_inputs, p_inputs = inputs
         l_res = self.left_hand_model(l_inputs, training = training)
@@ -167,13 +167,7 @@ class SLRModel(Model):
         # current_shape: (batch, hand_output_size * 2 + pose_output_size)
         x=tf.expand_dims(x,axis=1)
         
-        if states is None:
-            states = self.gru.get_initial_state(x)
-            # states=[0]
-        x, states = self.gru(x, initial_state=states, training=training)
-        print("input:"+x.shape)
-        if return_states:
-            return self.dense_out(x), states
+        x= self.gru(x, training=training)
         return self.dense_out(x)
         
         
