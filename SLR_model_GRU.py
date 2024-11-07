@@ -230,6 +230,7 @@ def serialize(vids, stride = 1, loss_weights_list = None):
 def load_model(file_path):
     global model
     model = keras.models.load_model(file_path)
+
     return model
 
 def convert_to_dataset(x_train, y_train, batch_size = 1, sample_weights=None):
