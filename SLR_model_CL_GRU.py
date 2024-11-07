@@ -179,26 +179,27 @@ def decode_onehot2d(onehot_2d):
     "decode a onehot 2d array into a number array"
     return tf.argmax(onehot_2d, axis=-1)
 
-# TODO change this to accomodate CNNLSTM + GRU
-def serialize(vids, stride = 1, loss_weights_list = None):
-    """input shape: (load_size, frames)\n
-    ouput shape: (load_size, input_seq_size, 63 or 32, frames)"""
-    each_size = []
+def serialize(vid, stride = 1, window_size = 9, hop_length=6,  loss_weights = None):
+    """input shape: (frames, features**)\n
+    ouput shape: (window_counts , ceil(window_size/stride) , features**)"""
     x_res = []
     weight_res = []
-    for i, vid in enumerate(vids):
-        window_count = 0
-        start = 0
-        while (start + 63) < len(vid):
-            x_res.append(vid[start: start+63: stride])
-            window_count += 1
-            if loss_weights_list is not None:
-                weight_res.append(loss_weights_list[i][start+63-1])
-            start += 6
-        each_size.append(window_count)
-    if loss_weights_list is not None:
-        return np.array(x_res), each_size, weight_res
-    return np.array(x_res), each_size
+    window_count = 0
+    # start is included
+    # end is excluded
+    start = 0
+    end = start + window_size
+    while end < len(vid):
+        x_res.append(vid[start: end : stride])
+        window_count += 1
+        if loss_weights is not None:
+            weight_res.append(loss_weights[start + end-1])
+        start += hop_length
+        end = start + window_size
+        
+    if loss_weights is not None:
+        return np.array(x_res), window_count, weight_res
+    return np.array(x_res), window_count
 
 def load_model(file_path):
     global model
