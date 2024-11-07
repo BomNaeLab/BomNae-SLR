@@ -40,11 +40,13 @@ he_init = initializers.HeUniform()
 # Hyperparamerters
 # hand : conv3D
 hand_filter_size = 128
-hand_kernel_size = (3, 3)
+# time height width
+hand_kernel_size = (5, 3, 3)
 hand_stride = 1
 # pose: conv2D
 pose_filter_size = 128
-pose_kernel_size = 3
+# time features
+pose_kernel_size = (5,3)
 pose_stride = 1
 # combined GRU
 gru_units = 256
@@ -57,67 +59,68 @@ cce_loss = keras.losses.CategoricalCrossentropy(from_logits=False)
 cat_acc_metric = keras.metrics.CategoricalAccuracy()
 
 
-# custom layer definition
-class Conv2Plus1D(layers.Layer):
-    def __init__(self, kernel_size, filters = 1, strides = (1,1,1), padding = 'valid'):
-        """kernel_size is depth width height"""
-        super().__init__()
-        wh_stride = (1, strides[1], strides[2])
-        t_stride = (strides[0], 1, 1)
-        self.seq = keras.Sequential([  
-        # Spatial decomposition
-        layers.Conv3D(filters=filters,
-                      kernel_size=(1, kernel_size[1], kernel_size[2]), strides = wh_stride,
-                      padding=padding),
-        # Temporal decomposition
-        layers.Conv3D(filters=filters, 
-                      kernel_size=(kernel_size[0], 1, 1), strides = t_stride,
-                      padding=padding)
-        ])
+# # custom layer definition
+# class Conv2Plus1D(layers.Layer):
+#     def __init__(self, kernel_size, filters = 1, strides = (1,1,1), padding = 'valid'):
+#         """kernel_size is depth width height"""
+#         super().__init__()
+#         wh_stride = (1, strides[1], strides[2])
+#         t_stride = (strides[0], 1, 1)
+#         self.seq = keras.Sequential([  
+#         # Spatial decomposition
+#         layers.Conv3D(filters=filters,
+#                       kernel_size=(1, kernel_size[1], kernel_size[2]), strides = wh_stride,
+#                       padding=padding),
+#         # Temporal decomposition
+#         layers.Conv3D(filters=filters, 
+#                       kernel_size=(kernel_size[0], 1, 1), strides = t_stride,
+#                       padding=padding)
+#         ])
 
-    def call(self, x):
-        return self.seq(x)
+#     def call(self, x):
+#         return self.seq(x)
 
 
 # hand model
 class HandModel(Model):
     # run it every 2 frames in order to give it 2 temporal stride
-    """input shape: (batch, timesteps, h, w, channels)\n
-        output shape: (batch, timesteps, convolved_h * convolved_w * filters)"""
+    """input shape: (batch, window_count, window_size, h, w, channels)\n
+        output shape: (batch, window_count, convolved_t * convolved_h * convolved_w * filters)\n
+        convolved_t is the result size of kernal convolving through window_size axis"""
     def __init__(self, kernel_size, filters, strides):
         super().__init__()
         self.filters = filters
-        self.clstm = layers.ConvLSTM2D(filters = filters, kernel_size = kernel_size, strides = strides,
+        self.clstm = layers.ConvLSTM3D(filters = filters, kernel_size = kernel_size, strides = strides,
                                        padding="same", dropout=0.1, recurrent_dropout=0.05, return_sequences=True)
         self.ln = layers.LayerNormalization()
 
     def call(self, x, training= False):
         x = self.clstm(x)
         conv_shape = x.shape
-        # current shape: (batch, timesteps, convolved_h, convolved_w, filters)
+        # current shape: (batch, window_count, convolved_t, convolved_h, convolved_w, filters)
         # x = tf.squeeze(x)
-        x = layers.Reshape((conv_shape[1], conv_shape[2] * conv_shape[3] * self.filters))(x)
+        x = layers.Reshape((conv_shape[1], conv_shape[2] * conv_shape[3]* conv_shape[3] * self.filters))(x)
         return self.ln(x, training= training)
-
 
 
 # pose model
 class PoseModel(Model):
-    """input shape: (batch, timesteps, channel, features)\n
-        output shape: (batch, timesteps, filters * convolved_result)"""
+    """input shape: (batch, window_count, window_size, features, channels)\n
+        output shape: (batch, window_count, convolved_t *convolved_features * filters)\n
+        convolved_t is the result size of kernal convolving through window_size axis"""
     def __init__(self, kernel_size, filters):
         super().__init__()
         self.filters = filters
-        self.clstm = layers.ConvLSTM1D(filters = filters, kernel_size = kernel_size, padding="same", data_format="channels_first",
+        self.clstm = layers.ConvLSTM2D(filters = filters, kernel_size = kernel_size, padding="same",
                                         dropout=0.1, recurrent_dropout=0.05, return_sequences=True)
         self.ln = layers.LayerNormalization()
 
     def call(self, x, training= False):
-        # input shape:  batch time channel features
-        # output shape: (batch, timesteps, filters, convolved_result)
+        # input shape:  batch window_count window_size features channel
         x = self.clstm(x)
+        # current shape: (batch, window_count, convolved_t, convolved_result, filters)
         conv_shape = x.shape
-        x = layers.Reshape((conv_shape[1], self.filters * conv_shape[3]))(x)
+        x = layers.Reshape((conv_shape[1], self.filters * conv_shape[2]* conv_shape[3]))(x)
         return self.ln(x, training = training)
         
 
@@ -162,7 +165,9 @@ def get_model():
 #     return model.summary()
 
 def reinit_model(run_eagerly = False):
+    global model
     """reinitialize the model, reloads and resets the model"""
+    keras.backend.clear_session()
     model = SLRModel()
     optimizer = optimizers.Adam(learning_rate = learning_rate)
     # model.build((1,))
@@ -179,8 +184,8 @@ def decode_onehot2d(onehot_2d):
     "decode a onehot 2d array into a number array"
     return tf.argmax(onehot_2d, axis=-1)
 
-def serialize(vid, stride = 1, window_size = 9, hop_length=6,  loss_weights = None):
-    """input shape: (frames, features**)\n
+def serialize(vid, stride = 2, window_size = 9, hop_length=6,  loss_weights = None, is_pose = False):
+    """input vid shape: (frames, features**)\n
     ouput shape: (window_counts , ceil(window_size/stride) , features**)"""
     x_res = []
     weight_res = []
@@ -190,7 +195,10 @@ def serialize(vid, stride = 1, window_size = 9, hop_length=6,  loss_weights = No
     start = 0
     end = start + window_size
     while end < len(vid):
-        x_res.append(vid[start: end : stride])
+        window = vid[start: end : stride]
+        if is_pose:
+            window = np.swapaxes(window,-1, -2)
+        x_res.append(window)
         window_count += 1
         if loss_weights is not None:
             weight_res.append(loss_weights[start + end-1])
