@@ -52,11 +52,14 @@ he_init = initializers.HeUniform()
 # hand : conv3D
 hand_filter_size = (128, 128, 128)
 hand_kernel_size = ((9, 3, 3), (9,3,3), (9,3,3)) #TODO
-hand_activation = ("ln", "gelu", "gelu")
-hand_stride = ((2,1,1), 1, 1)
+hand_activation = ("layer_norm", "gelu", None)
+hand_initializer = ('glorot_uniform', he_init , 'glorot_uniform')
+hand_stride = ((2,1,1), (2,1,1), (2,1,1))
 # pose: conv2D
 pose_filter_size = (128, 128)
 pose_kernel_size = ((5,3), (5,3)) #TODO
+pose_activation = ("gelu", None)
+pose_initializer = (he_init , 'glorot_uniform')
 pose_stride = (1 , 1)
 # combined FC
 GRU_unit_size = 256
@@ -71,7 +74,7 @@ cat_acc_metric = keras.metrics.CategoricalAccuracy()
 
 # custom layer definition
 class Conv2Plus1D(layers.Layer):
-    def __init__(self, kernel_size, filters, strides = 1, padding = 'valid'):
+    def __init__(self, kernel_size, filters, strides = 1, padding = 'valid', activation = None, kernel_initializer = 'glorot_uniform'):
         """kernel_size is depth width height"""
         super().__init__()
         wh_stride = (1, strides[1], strides[2])
@@ -80,11 +83,11 @@ class Conv2Plus1D(layers.Layer):
         # Spatial decomposition
         layers.Conv3D(filters=filters,
                       kernel_size=(1, kernel_size[1], kernel_size[2]), strides = wh_stride,
-                      padding=padding),
+                      padding=padding, activation= activation, kernel_initializer = kernel_initializer),
         # Temporal decomposition
         layers.Conv3D(filters=filters, 
                       kernel_size=(kernel_size[0], 1, 1), strides = t_stride,
-                      padding=padding)
+                      padding=padding, activation= activation, kernel_initializer = kernel_initializer)
         ])
 
     def call(self, x):
@@ -92,65 +95,77 @@ class Conv2Plus1D(layers.Layer):
 
 
 # hand model
-class HandModel(Model):
+class Conv2Plus1D_Network(Model):
     # run it every 2 frames in order to give it 2 temporal stride
     """takes lists of parameters for cnn layers, create list size number of cnn layers\n
     all parameters with the name list have to be the same sized list on the axis 0\n
+        activation_list:
+            string, \"layer_norm\" or any activation function, if its \"layer_norm\", there is no activation
+            on the layer but layer normalization is applied after the layer
     - call:
         input shape: (batch, time, h, w, channels)\n
-        output shape: (batch, convolved_time, convolved_h * convolved_w * filter_size)"""
-    def __init__(self, kernel_size_list, filters_list, strides_list = 1, padding = 'valid'):
+        output shape: (batch, convolved_time, convolved_h , convolved_w , filter_size)"""
+    def __init__(self, kernel_size_list, filters_list,  activation_list, initializer_list, strides_list, padding = 'valid'):
         super().__init__()
         self.layers_list = []
+        self.requires_training_arg = []
         for i in range(len(kernel_size_list)):
-            conv = Conv2Plus1D(kernel_size = kernel_size_list[i], filters= filters_list[i], strides = strides_list[i], padding=padding)
-            self.layers.append(conv)
-            self.layers.append(layers.LayerNormalization())
+            if activation_list[i] is "layer_norm":
+                conv = Conv2Plus1D(kernel_size = kernel_size_list[i], filters= filters_list[i], strides = strides_list[i], 
+                                   kernel_initializer= initializer_list[i], padding=padding)
+                self.layers_list.append(conv)
+                self.requires_training_arg.append(False)
+                self.layers_list.append(layers.LayerNormalization(axis=(1,2,3)))
+                self.requires_training_arg.append(True)
+            else:
+                conv = Conv2Plus1D(kernel_size = kernel_size_list[i], filters= filters_list[i], strides = strides_list[i],
+                                   kernel_initializer = initializer_list[i], padding=padding, activation=activation_list[i])
+                self.layers_list.append(conv)
+                self.requires_training_arg.append(False)
 
     def call(self, x, training= False):
-        x = self.conv21(x)
-        conv_shape = x.shape
-        # current shape: (batch, convolved_time, convolved_h, convolved_w, filter_size)
-        x = tf.squeeze(x)
-        x = layers.Reshape((conv_shape[1], conv_shape[2] * conv_shape[3] * self.filters))(x)
-        return self.ln(x, training= training)
-
-
+        for i,layer in enumerate(self.layers_list):
+            if self.requires_training_arg[i]:
+                x = layer(x, training= training)
+            else:
+                x = layer(x)
+        return x
 
 # pose model
-class PoseModel(Model):
-    """input shape: (batch, time, channel, features)\n
-        output shape: (batch, convolved_time, xyz_channel * filter_size)"""
-    def __init__(self, kernel_size = (9,3), filters = 1, dense_size = 3, padding = 'valid'):
+class Conv2D_Network(Model):
+    """takes lists of parameters for cnn layers, create list size number of cnn layers\n
+    all parameters with the name list have to be the same sized list on the axis 0\n\n
+        activation_list:
+            string, \"layer_norm\" or any activation function, if its \"layer_norm\", there is no activation
+            on the layer but layer normalization is applied after the layer
+    - call:
+        input shape: (batch, time, features, channels)\n
+        output shape: (batch, convolved_time, convolved_features , filter_size)"""
+    def __init__(self, kernel_size_list, filters_list,  activation_list, initializer_list, strides_list, padding = 'valid'):
         super().__init__()
-        self.dense_size = dense_size
-        self.dense_td = layers.TimeDistributed(layers.Dense(dense_size, activation='relu', kernel_initializer= he_init))
-        self.conv2_x = layers.Conv2D(filters=filters, kernel_size = kernel_size, padding = padding)
-        self.conv2_y = layers.Conv2D(filters=filters, kernel_size = kernel_size, padding = padding)
-        self.conv2_z = layers.Conv2D(filters=filters, kernel_size = kernel_size, padding = padding)
-        self.ln = layers.LayerNormalization()
+        self.layers_list = []
+        self.requires_training_arg = []
+        for i in range(len(kernel_size_list)):
+            if activation_list[i] is "layer_norm":
+                conv = layers.Conv2D(kernel_size = kernel_size_list[i], filters= filters_list[i], strides = strides_list[i], 
+                                   kernel_initializer= initializer_list[i], padding=padding)
+                self.layers_list.append(conv)
+                self.requires_training_arg.append(False)
+                self.layers_list.append(layers.LayerNormalization(axis=(1,2)))
+                self.requires_training_arg.append(True)
+            else:
+                conv = layers.Conv2D(kernel_size = kernel_size_list[i], filters= filters_list[i], strides = strides_list[i],
+                                   kernel_initializer = initializer_list[i], padding=padding, activation=activation_list[i])
+                self.layers_list.append(conv)
+                self.requires_training_arg.append(False)
 
-    def call(self, input, training= False):
-        # input shape:  batch time channel features
-        # output shape: batch channel conv_result
-        temp = self.dense_td(input, training = training)
-        # time channel FC_result -> channel time FC_result
-        temp = layers.Permute((2, 1, 3))(temp)
-        # below force adds required "channel" input for 2dCNN (not to confuse with xyz channel)
-        temp = tf.expand_dims(temp, axis=4)
-        # current shape: xyz_channel, time, FC_result, 1
-        xyz = tf.split(temp, 3, axis = 1)
-        x = self.conv2_x(tf.squeeze(xyz[0], axis= 1))
-        y = self.conv2_y(tf.squeeze(xyz[1], axis= 1))
-        z = self.conv2_z(tf.squeeze(xyz[2], axis= 1))
-        conv_shape = x.shape
-        # shape: (batch, conv_time(which is 1), 1, filter_size) -> (batch, filter_size) -> (batch, xyz_ch, filter_size)
-        x = tf.squeeze(x)
-        y = tf.squeeze(y)
-        z = tf.squeeze(z)
-        temp = tf.stack([x, y, z], axis=1)
-        temp = layers.Reshape((conv_shape[1], 3 * conv_shape[3]))(temp) # 3 from x y z 3 channels
-        return self.ln(temp, training = training)
+    def call(self, x, training= False):
+        for i,layer in enumerate(self.layers_list):
+            if self.requires_training_arg[i]:
+                x = layer(x, training= training)
+            else:
+                x = layer(x)
+        return x
         
 
 
@@ -158,16 +173,20 @@ class PoseModel(Model):
 class SLRModel(Model):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.left_hand_model = HandModel(kernel_size = hand_kernel_size, filters = hand_filter_size, strides=hand_stride, padding = 'same')
-        self.right_hand_model = HandModel(kernel_size = hand_kernel_size, filters = hand_filter_size, strides=hand_stride, padding = 'same')
-        self.pose_model = PoseModel(kernel_size = pose_kernel_size, filters=pose_filter_size, dense_size = pose_dense_size, padding = 'same')
+        self.left_hand_model = Conv2Plus1D_Network(kernel_size_list= hand_kernel_size, filters_list= hand_filter_size,
+                            activation_list= hand_activation, initializer_list= hand_initializer, strides_list= hand_stride)
+        self.right_hand_model = Conv2Plus1D_Network(kernel_size_list= hand_kernel_size, filters_list= hand_filter_size,
+                            activation_list= hand_activation, initializer_list= hand_initializer, strides_list= hand_stride)
+        self.pose_model = Conv2D_Network(kernel_size_list= pose_kernel_size, filters_list= pose_filter_size,
+                            activation_list= pose_activation, initializer_list= pose_initializer, strides_list= pose_stride)
         # self.gru = layers.GRU(GRU_unit_size, return_state= True)
-        self.gru = layers.GRU(GRU_unit_size, stateful=True)
+        self.gru = layers.GRU(GRU_unit_size)
         # self.dense1 = layers.Dense(combined_dense1_size, activation='gelu', kernel_initializer = he_init)
         self.dense_out = layers.Dense(combined_output_size, activation='softmax')
         self.flat = layers.Flatten()
     
     def call(self, inputs, training= False):
+        #TODO per video loop integration for CNNs
         # inputs 0: L, 1: R, 2: Pose
         l_inputs, r_inputs, p_inputs = inputs
         l_res = self.left_hand_model(l_inputs, training = training)
@@ -219,6 +238,7 @@ def decode_onehot2d(onehot_2d):
     return tf.argmax(onehot_2d, axis=-1)
 
 
+#TODO per video + pose channel transpose
 def serialize(vids, stride = 1, loss_weights_list = None):
     """input shape: (load_size, frames)\n
     ouput shape: (load_size, input_seq_size, 9 or 5 depending on stride setting, frames)"""
