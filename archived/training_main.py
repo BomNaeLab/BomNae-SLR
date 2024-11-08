@@ -6,7 +6,7 @@ import time
 import json
 import preprocess
 # import preprocess as prep
-import SLR_model_GRU
+import archived.SLR_model_GRU as SLR_model_GRU
 import numpy as np
 
 load_size = 3000 # number of data to be loaded at once
