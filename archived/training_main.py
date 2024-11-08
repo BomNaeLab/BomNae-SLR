@@ -6,7 +6,7 @@ import time
 import json
 import preprocess
 # import preprocess as prep
-import archived.SLR_model_GRU as SLR_model_GRU
+import archived.SLR_model_GRU_legacy as SLR_model_GRU_legacy
 import numpy as np
 
 load_size = 3000 # number of data to be loaded at once
@@ -15,7 +15,7 @@ run_time=2
 batch_size = 16
 save_dir = "saves_GRU"
 load_dir = "saves_GRU"
-model = SLR_model_GRU.get_model()
+model = SLR_model_GRU_legacy.get_model()
 
  # reload model file
 end_file=preprocess.getoutputdir()
@@ -66,15 +66,15 @@ with open(os.path.join('logs',ckpt_name+'.txt'), 'a') as logs:
                 if len(l_raws)>=load_size:
                     
                     logs.write(f'{ time.strftime("%H-%M-%S", time.localtime(time.time()))}:{k}) person:{i} : {start_word} ~ {end_word}\n')  # 한 줄 쓰기
-                    l_train, each = SLR_model_GRU.serialize(l_raws)
-                    r_train, each = SLR_model_GRU.serialize(r_raws)
-                    p_train, each, sample_weights = SLR_model_GRU.serialize(p_raws, stride=2, loss_weights_list=loss_weights_raws)
+                    l_train, each = SLR_model_GRU_legacy.serialize(l_raws)
+                    r_train, each = SLR_model_GRU_legacy.serialize(r_raws)
+                    p_train, each, sample_weights = SLR_model_GRU_legacy.serialize(p_raws, stride=2, loss_weights_list=loss_weights_raws)
                     x_train = (l_train, r_train, p_train)
                     
                     y_train = np.repeat(y_raws, each)
-                    y_train = SLR_model_GRU.encode_onehot2d(y_train)
+                    y_train = SLR_model_GRU_legacy.encode_onehot2d(y_train)
                     
-                    dataset = SLR_model_GRU.convert_to_dataset(x_train, y_train, batch_size, sample_weights)
+                    dataset = SLR_model_GRU_legacy.convert_to_dataset(x_train, y_train, batch_size, sample_weights)
                     hist = model.fit(dataset, epochs=epochs, callbacks=[model_checkpoint_callback])
 
                     with open(hist_path, 'w') as file:
