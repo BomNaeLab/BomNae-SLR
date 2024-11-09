@@ -21,7 +21,7 @@ from keras import initializers
 # depthwise convolution
 # CNN uses "same" padding
 # removed pose first ever dense layer
-# TODO consideration: residual connection?
+# residual connection
 #----------------------------------
 # (GRU over CNN legacy) differences between one-hot model
 #----------------------------------:
@@ -51,18 +51,18 @@ he_init = initializers.HeUniform()
 
 # Hyperparamerters
 # hand : conv3D
-hand_filter_size = (64, 256, 128)
-hand_kernel_size = ((9, 5, 5), (5,1,1), (5,3,3)) #TODO
+hand_filter_size = (64, 192, 96)
+hand_kernel_size = ((9, 5, 5), (5,1,1), (5,3,3))
 hand_activation = ("layer_norm", "gelu", None)
 hand_initializer = ('glorot_uniform', he_init , 'glorot_uniform')
 hand_padding = (('valid', 'same'), ('same', 'same'), ('same', 'same')) # temporal, spatial 
 hand_stride = ((1,1,1), (2,1,1), (1,1,1))
 # pose: conv2D
-pose_filter_size = (96, 128)
-pose_kernel_size = ((5,3), (5,3)) #TODO
+pose_filter_size = (64, 96)
+pose_kernel_size = ((5,3), (3,3))
 pose_activation = ("gelu", None)
 pose_initializer = (he_init , 'glorot_uniform')
-pose_padding = ('same', 'same', 'same') # for both temporal and spatial
+pose_padding = ('valid', 'same') # for both temporal and spatial
 pose_stride = (1 , 1)
 # combined FC
 GRU_unit_size = 256
@@ -74,6 +74,9 @@ cce_loss = keras.losses.CategoricalCrossentropy(from_logits=False)
 # bin_acc_metric = keras.metrics.BinaryAccuracy()
 cat_acc_metric = keras.metrics.CategoricalAccuracy()
 
+# serialize hyperparameters
+# window_size = 17
+# hop_dist = 10
 # odd kernel size: 9, minimum=9
 # if prev 'valid', 5 , stride=2,  minumum = 9+(5-1)*2
 # if prev 'same', 5 , stride=2,  minumum = 0+(5-1)*2
@@ -257,21 +260,22 @@ class SLRModel(Model):
         return layers.add([result, residual*residual_factor])
     
     def call(self, inputs, training= False):
-        #TODO per video loop integration for CNNs
         # inputs 0: L, 1: R, 2: Pose
         l_inputs, r_inputs, p_inputs = inputs
+        # batch_size should be the same as window_count
         l_res = self.left_hand_model(l_inputs, training = training)
-        r_res = self.right_hand_model(r_inputs, training = training)
-        p_res = self.pose_model(p_inputs, training = training)
         l_res = self.flatten_residual_connection(l_inputs, l_res)
+        r_res = self.right_hand_model(r_inputs, training = training)
         r_res = self.flatten_residual_connection(r_inputs, r_res)
+        p_res = self.pose_model(p_inputs, training = training)
         p_res = self.flatten_residual_connection(p_inputs, p_res)
         # l_res = self.flat(l_res)
         # r_res = self.flat(r_res)
         # p_res = self.flat(p_res)
+        # each componenets should have shape of (batch, -1)
         x = tf.concat([l_res, r_res, p_res], axis = 1)
-        # current_shape: (batch, hand_output_size * 2 + pose_output_size)
-        x=tf.expand_dims(x,axis=1)
+        # (batch, all 3 combined)
+        x=tf.expand_dims(x,axis=0)
         
         x= self.gru(x, training=training)
         return self.dense_out(x)
@@ -312,27 +316,31 @@ def decode_onehot2d(onehot_2d):
     return tf.argmax(onehot_2d, axis=-1)
 
 
-#TODO per video + pose channel transpose
-def serialize(vids, stride = 1, loss_weights_list = None):
-    """input shape: (load_size, frames)\n
-    ouput shape: (load_size, input_seq_size, 9 or 5 depending on stride setting, frames)"""
-    each_size = []
+# copied from CLGRU
+def serialize(vid, stride = 1, window_size = 17, hop_length=10,  loss_weights = None, is_pose = False):
+    """input vid shape: (frames, features**)\n
+    ouput shape: (window_counts , ceil(window_size/stride) , features**)"""
     x_res = []
     weight_res = []
-    for i, vid in enumerate(vids):
-        window_count = 0
-        start = 0
-        while (start + 9) < len(vid): # check if the end of this window goes over the end of the video
-            x_res.append(vid[start: start+9: stride])
-            window_count += 1
-            if loss_weights_list is not None:
-                weight_res.append(loss_weights_list[i][start+9-1])
-            start += 6
-            # ^ hop frames
-        each_size.append(window_count)
-    if loss_weights_list is not None:
-        return np.array(x_res), each_size, weight_res
-    return np.array(x_res), each_size
+    window_count = 0
+    # start is included
+    # end is excluded
+    start = 0
+    end = start + window_size
+    while end < len(vid):
+        window = vid[start: end : stride]
+        if is_pose:
+            window = np.swapaxes(window,-1, -2)
+        x_res.append(window)
+        window_count += 1
+        if loss_weights is not None:
+            weight_res.append(loss_weights[start + end-1])
+        start += hop_length
+        end = start + window_size
+        
+    if loss_weights is not None:
+        return np.array(x_res), window_count, weight_res
+    return np.array(x_res), window_count
 
 def load_model(file_path):
     global model

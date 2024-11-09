@@ -76,7 +76,6 @@ cat_acc_metric = keras.metrics.CategoricalAccuracy()
 #                       kernel_size=(kernel_size[0], 1, 1), strides = t_stride,
 #                       padding=padding)
 #         ])
-
 #     def call(self, x):
 #         return self.seq(x)
 
