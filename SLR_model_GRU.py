@@ -13,11 +13,12 @@ from keras import initializers
 #------------------------------------------------------------------------------------#
 
 # NOTE
-# this is GRU over CNN "per video" model, derived from the GRU over CNN legacy model
+# this is CNN GRU with Residual model, derived from the GRU over CNN legacy model
 #----------------------------------
-# (GRU over CNN "per video") differneces between GRU over CNN legacy
+# (CNN GRU with Residual) differneces between GRU over CNN legacy
 #----------------------------------:
 # configurable CNN layer count (hand3, pose2)
+# depthwise convolution
 # CNN uses "same" padding
 # removed pose first ever dense layer
 # TODO consideration: residual connection?
@@ -50,16 +51,18 @@ he_init = initializers.HeUniform()
 
 # Hyperparamerters
 # hand : conv3D
-hand_filter_size = (128, 128, 128)
-hand_kernel_size = ((9, 3, 3), (9,3,3), (9,3,3)) #TODO
+hand_filter_size = (64, 256, 128)
+hand_kernel_size = ((9, 5, 5), (5,1,1), (5,3,3)) #TODO
 hand_activation = ("layer_norm", "gelu", None)
 hand_initializer = ('glorot_uniform', he_init , 'glorot_uniform')
-hand_stride = ((2,1,1), (2,1,1), (2,1,1))
+hand_padding = (('valid', 'same'), ('same', 'same'), ('same', 'same')) # temporal, spatial 
+hand_stride = ((1,1,1), (2,1,1), (1,1,1))
 # pose: conv2D
-pose_filter_size = (128, 128)
+pose_filter_size = (96, 128)
 pose_kernel_size = ((5,3), (5,3)) #TODO
 pose_activation = ("gelu", None)
 pose_initializer = (he_init , 'glorot_uniform')
+pose_padding = ('same', 'same', 'same') # for both temporal and spatial
 pose_stride = (1 , 1)
 # combined FC
 GRU_unit_size = 256
@@ -71,10 +74,13 @@ cce_loss = keras.losses.CategoricalCrossentropy(from_logits=False)
 # bin_acc_metric = keras.metrics.BinaryAccuracy()
 cat_acc_metric = keras.metrics.CategoricalAccuracy()
 
+# odd kernel size: 9, minimum=9
+# if prev 'valid', 5 , stride=2,  minumum = 9+(5-1)*2
+# if prev 'same', 5 , stride=2,  minumum = 0+(5-1)*2
 
 # custom layer definition
 class Conv2Plus1D(layers.Layer):
-    def __init__(self, kernel_size, filters, strides = 1, padding = 'valid', activation = None, kernel_initializer = 'glorot_uniform'):
+    def __init__(self, kernel_size, filters, strides = 1, padding_list = ('valid', 'valid'), activation = None, kernel_initializer = 'glorot_uniform'):
         """kernel_size is depth width height"""
         super().__init__()
         wh_stride = (1, strides[1], strides[2])
@@ -83,16 +89,68 @@ class Conv2Plus1D(layers.Layer):
         # Spatial decomposition
         layers.Conv3D(filters=filters,
                       kernel_size=(1, kernel_size[1], kernel_size[2]), strides = wh_stride,
-                      padding=padding, activation= activation, kernel_initializer = kernel_initializer),
+                      padding=padding_list[1], activation= activation, kernel_initializer = kernel_initializer),
         # Temporal decomposition
         layers.Conv3D(filters=filters, 
                       kernel_size=(kernel_size[0], 1, 1), strides = t_stride,
-                      padding=padding, activation= activation, kernel_initializer = kernel_initializer)
+                      padding=padding_list[0], activation= activation, kernel_initializer = kernel_initializer)
         ])
 
     def call(self, x):
         return self.seq(x)
 
+class Separable_Conv2Plus1D(Model):
+    def __init__(self, kernel_size, filters, strides = 1, padding_list = ('valid', 'valid'), activation = None, kernel_initializer = 'glorot_uniform'):
+        """kernel_size is depth width height"""
+        super().__init__()
+        # wh_stride = (1, strides[1], strides[2])
+        wh_stride = (strides[1], strides[2])
+        t_stride = (strides[0],)
+        # Spatial decomposition
+        self.dc2d = layers.SeparableConv2D(filters=filters,
+                      kernel_size=(kernel_size[1], kernel_size[2]), strides = wh_stride,
+                      padding=padding_list[1], activation= activation, kernel_initializer = kernel_initializer),
+        # Temporal decomposition
+        self.c1d = layers.Conv1D(filters=filters, 
+                      kernel_size=(kernel_size[0],), strides = t_stride,
+                      padding=padding_list[0], activation= activation, kernel_initializer = kernel_initializer)
+
+    def call(self, x):
+        # input shape: (batch, time, h, w, channels)
+        res_2d = []
+        res_1d = []
+        for i in range(x.shape[1]):
+            # (batch, h, w, channels) per time
+            res_2d.append(self.dc2d(x[:,i]))
+        # res_2d: (time, batch, conv_h, conv_w, channels(same as the original input))
+        x = tf.stack(res_2d, axis=1)
+        # x = (batch, time,  conv_h, conv_w, channels)
+        two_dim_shape = x.shape
+        for h in range(two_dim_shape[2]):
+            for w in range(two_dim_shape[3]):
+                # (batch, time, channels) per features
+                res_1d.append(self.c1d(x[:,:,h,w,:]))
+        # res_1d: (h*w, batch, conv_time, filters)
+        x = tf.stack(res_1d, axis=1)
+        # x: (batch, h*w, conv_time, filters)
+        x = layers.Permute((2,1,3))(x)
+        # x: (batch, conv_time, h*w , filters)
+        return layers.Reshape((x.shape[1], two_dim_shape[2], two_dim_shape[3], -1))(x)
+
+class Project(layers.Layer):
+    """
+    Project certain dimensions of the tensor as the data is passed through different 
+    sized filters and downsampled. 
+    """
+    def __init__(self, units):
+        super().__init__()
+        self.seq = keras.Sequential([
+            layers.Dense(units),
+            layers.LayerNormalization()
+        ])
+
+    def call(self, x):
+        return self.seq(x)
 
 # hand model
 class Conv2Plus1D_Network(Model):
@@ -105,21 +163,21 @@ class Conv2Plus1D_Network(Model):
     - call:
         input shape: (batch, time, h, w, channels)\n
         output shape: (batch, convolved_time, convolved_h , convolved_w , filter_size)"""
-    def __init__(self, kernel_size_list, filters_list,  activation_list, initializer_list, strides_list, padding = 'valid'):
+    def __init__(self, kernel_size_list, filters_list,  activation_list, initializer_list, strides_list, padding_list):
         super().__init__()
         self.layers_list = []
         self.requires_training_arg = []
         for i in range(len(kernel_size_list)):
             if activation_list[i] is "layer_norm":
-                conv = Conv2Plus1D(kernel_size = kernel_size_list[i], filters= filters_list[i], strides = strides_list[i], 
-                                   kernel_initializer= initializer_list[i], padding=padding)
+                conv = Separable_Conv2Plus1D(kernel_size = kernel_size_list[i], filters= filters_list[i], strides = strides_list[i], 
+                                   kernel_initializer= initializer_list[i], padding= padding_list[i])
                 self.layers_list.append(conv)
                 self.requires_training_arg.append(False)
                 self.layers_list.append(layers.LayerNormalization(axis=(1,2,3)))
                 self.requires_training_arg.append(True)
             else:
-                conv = Conv2Plus1D(kernel_size = kernel_size_list[i], filters= filters_list[i], strides = strides_list[i],
-                                   kernel_initializer = initializer_list[i], padding=padding, activation=activation_list[i])
+                conv = Separable_Conv2Plus1D(kernel_size = kernel_size_list[i], filters= filters_list[i], strides = strides_list[i],
+                                   kernel_initializer = initializer_list[i], padding= padding_list[i], activation=activation_list[i])
                 self.layers_list.append(conv)
                 self.requires_training_arg.append(False)
 
@@ -141,21 +199,21 @@ class Conv2D_Network(Model):
     - call:
         input shape: (batch, time, features, channels)\n
         output shape: (batch, convolved_time, convolved_features , filter_size)"""
-    def __init__(self, kernel_size_list, filters_list,  activation_list, initializer_list, strides_list, padding = 'valid'):
+    def __init__(self, kernel_size_list, filters_list,  activation_list, initializer_list, strides_list, padding_list):
         super().__init__()
         self.layers_list = []
         self.requires_training_arg = []
         for i in range(len(kernel_size_list)):
             if activation_list[i] is "layer_norm":
                 conv = layers.Conv2D(kernel_size = kernel_size_list[i], filters= filters_list[i], strides = strides_list[i], 
-                                   kernel_initializer= initializer_list[i], padding=padding)
+                                   kernel_initializer= initializer_list[i], padding= padding_list[i])
                 self.layers_list.append(conv)
                 self.requires_training_arg.append(False)
                 self.layers_list.append(layers.LayerNormalization(axis=(1,2)))
                 self.requires_training_arg.append(True)
             else:
                 conv = layers.Conv2D(kernel_size = kernel_size_list[i], filters= filters_list[i], strides = strides_list[i],
-                                   kernel_initializer = initializer_list[i], padding=padding, activation=activation_list[i])
+                                   kernel_initializer = initializer_list[i], padding= padding_list[i], activation=activation_list[i])
                 self.layers_list.append(conv)
                 self.requires_training_arg.append(False)
 
@@ -174,16 +232,29 @@ class SLRModel(Model):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.left_hand_model = Conv2Plus1D_Network(kernel_size_list= hand_kernel_size, filters_list= hand_filter_size,
-                            activation_list= hand_activation, initializer_list= hand_initializer, strides_list= hand_stride)
+                            activation_list= hand_activation, initializer_list= hand_initializer, strides_list= hand_stride,
+                            padding_list= hand_padding)
         self.right_hand_model = Conv2Plus1D_Network(kernel_size_list= hand_kernel_size, filters_list= hand_filter_size,
-                            activation_list= hand_activation, initializer_list= hand_initializer, strides_list= hand_stride)
+                            activation_list= hand_activation, initializer_list= hand_initializer, strides_list= hand_stride,
+                            padding_list= hand_padding)
         self.pose_model = Conv2D_Network(kernel_size_list= pose_kernel_size, filters_list= pose_filter_size,
-                            activation_list= pose_activation, initializer_list= pose_initializer, strides_list= pose_stride)
+                            activation_list= pose_activation, initializer_list= pose_initializer, strides_list= pose_stride,
+                            padding_list= pose_padding)
         # self.gru = layers.GRU(GRU_unit_size, return_state= True)
         self.gru = layers.GRU(GRU_unit_size)
         # self.dense1 = layers.Dense(combined_dense1_size, activation='gelu', kernel_initializer = he_init)
         self.dense_out = layers.Dense(combined_output_size, activation='softmax')
         self.flat = layers.Flatten()
+        
+    def flatten_residual_connection(self, original, result, residual_factor = 1.0):
+        """ flattens the inputs and make residual connection
+        """
+        original = self.flat(original)
+        result = self.flat(result)
+        if result.shape[-1] != original.shape[-1]:
+            residual = Project(result.shape[-1])(original)
+
+        return layers.add([result, residual*residual_factor])
     
     def call(self, inputs, training= False):
         #TODO per video loop integration for CNNs
@@ -192,9 +263,12 @@ class SLRModel(Model):
         l_res = self.left_hand_model(l_inputs, training = training)
         r_res = self.right_hand_model(r_inputs, training = training)
         p_res = self.pose_model(p_inputs, training = training)
-        l_res = self.flat(l_res)
-        r_res = self.flat(r_res)
-        p_res = self.flat(p_res)
+        l_res = self.flatten_residual_connection(l_inputs, l_res)
+        r_res = self.flatten_residual_connection(r_inputs, r_res)
+        p_res = self.flatten_residual_connection(p_inputs, p_res)
+        # l_res = self.flat(l_res)
+        # r_res = self.flat(r_res)
+        # p_res = self.flat(p_res)
         x = tf.concat([l_res, r_res, p_res], axis = 1)
         # current_shape: (batch, hand_output_size * 2 + pose_output_size)
         x=tf.expand_dims(x,axis=1)
@@ -228,7 +302,7 @@ def reinit_model(run_eagerly = False):
     return model
 
 
-# utility functions
+# utility functions 
 def encode_onehot2d(num_arr):
     "encode a number array into onehot 2d array"
     return tf.raw_ops.OneHot(indices = num_arr, depth = combined_output_size, on_value = 1.0, off_value = 0.0)
