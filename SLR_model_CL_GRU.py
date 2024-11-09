@@ -98,7 +98,7 @@ class HandModel(Model):
         conv_shape = x.shape
         # current shape: (batch, window_count, convolved_t, convolved_h, convolved_w, filters)
         # x = tf.squeeze(x)
-        x = layers.Reshape((conv_shape[1], conv_shape[2] * conv_shape[3]* conv_shape[3] * self.filters))(x)
+        x = layers.Reshape((conv_shape[1], -1))(x)
         return self.ln(x, training= training)
 
 
@@ -119,7 +119,7 @@ class PoseModel(Model):
         x = self.clstm(x)
         # current shape: (batch, window_count, convolved_t, convolved_result, filters)
         conv_shape = x.shape
-        x = layers.Reshape((conv_shape[1], self.filters * conv_shape[2]* conv_shape[3]))(x)
+        x = layers.Reshape((conv_shape[1], -1))(x)
         return self.ln(x, training = training)
         
 
@@ -200,13 +200,14 @@ def serialize(vid, stride = 2, window_size = 9, hop_length=6,  loss_weights = No
         x_res.append(window)
         window_count += 1
         if loss_weights is not None:
-            weight_res.append(loss_weights[start + end-1])
+            weight_res.append(loss_weights[end-1])
         start += hop_length
         end = start + window_size
-        
+    res = np.array(x_res)
     if loss_weights is not None:
-        return np.array(x_res), window_count, weight_res
-    return np.array(x_res), window_count
+        # temporary solution for batch size being none
+        return np.expand_dims(res, axis=0), window_count, weight_res
+    return np.expand_dims(res, axis=0), window_count
 
 def load_model(file_path):
     global model

@@ -334,7 +334,7 @@ def serialize(vid, stride = 1, window_size = 17, hop_length=10,  loss_weights = 
         x_res.append(window)
         window_count += 1
         if loss_weights is not None:
-            weight_res.append(loss_weights[start + end-1])
+            weight_res.append(loss_weights[end-1])
         start += hop_length
         end = start + window_size
         
