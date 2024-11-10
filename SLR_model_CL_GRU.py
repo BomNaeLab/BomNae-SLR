@@ -39,12 +39,12 @@ he_init = initializers.HeUniform()
 
 # Hyperparamerters
 # hand : conv3D
-hand_filter_size = 128
+hand_filter_size = 96
 # time height width
 hand_kernel_size = (5, 3, 3)
 hand_stride = 1
 # pose: conv2D
-pose_filter_size = 128
+pose_filter_size = 64
 # time features
 pose_kernel_size = (5,3)
 pose_stride = 1
@@ -131,11 +131,11 @@ class SLRModel(Model):
         self.left_hand_model = HandModel(kernel_size = hand_kernel_size, filters = hand_filter_size, strides=hand_stride)
         self.right_hand_model = HandModel(kernel_size = hand_kernel_size, filters = hand_filter_size, strides=hand_stride)
         self.pose_model = PoseModel(kernel_size = pose_kernel_size, filters=pose_filter_size)
-        self.gru = layers.GRU(gru_units)
+        self.gru = layers.GRU(gru_units, return_state=True)
         self.dense_out = layers.Dense(combined_output_size, activation='softmax')
         self.flat = layers.Flatten()
 
-    def call(self, inputs, training= False):
+    def call(self, inputs, training= False, gru_state = None, reset_state = False):
         # inputs 0: L, 1: R, 2: Pose
         l_inputs, r_inputs, p_inputs = inputs
         l_res = self.left_hand_model(l_inputs, training=training)
@@ -146,8 +146,14 @@ class SLRModel(Model):
         # p_res = self.flat(p_res)
         x = tf.concat([l_res, r_res, p_res], axis = 2)
         # current_shape: (batch, timesteps, hand_output_size * 2 + pose_output_size)
-        x = self.gru(x, training=training)
-        return self.dense_out(x)
+        if gru_state is None or training or reset_state:
+            x, gru_state = self.gru(x, training=training)
+        else:
+            x, gru_state = self.gru(x, training=training, initial_state = gru_state)
+        if training:
+            return self.dense_out(x)
+        else:
+            return self.dense_out(x), gru_state
         
 
 
