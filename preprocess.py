@@ -9,8 +9,8 @@ data_dir = 'signData'
 train_dir = os.path.join(data_dir,'train')
 val_dir = os.path.join(data_dir,'valid')
 
-output_dir = os.path.join(data_dir,'nptxt')
-val_output_dir = os.path.join(data_dir,"nptxt_val")
+output_dir = os.path.join(data_dir,'nptxt_CL')
+val_output_dir = os.path.join(data_dir,"nptxt_CL_val")
 weight_dir = os.path.join(data_dir,'weights')
 
 train_landmark_dir = os.path.join(train_dir,'label','landmark')
@@ -35,17 +35,15 @@ def load_data(file_name,type="train"):
     wordCoordL = data['wordCoordL']
     wordCoordR = data['wordCoordR']
     wordCoordP = data['wordCoordP']
+    weight = data['weight']
     #단어 뜻 호출
-    ans = data['label'][2]
+    ans = data['label'][0]
     ans = ans.replace('\n', '')
     #해당 단어의 value 호출
     if ans[-1].isdigit():
         ans = ans[:-1]
     label = words_dicts[ans]
     if type=='train':
-        weight_path = f"{weight_dir}/{file_name}"
-        weight_data = np.load(weight_path)
-        weight = weight_data['weight']
         return wordCoordL, wordCoordR, wordCoordP, label ,weight
     else:
         return wordCoordL, wordCoordR, wordCoordP, label
