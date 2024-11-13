@@ -99,6 +99,7 @@ class HandModel(Model):
         # current shape: (batch, window_count, convolved_t, convolved_h, convolved_w, filters)
         # x = tf.squeeze(x)
         x = layers.Reshape((conv_shape[1], -1))(x)
+        print(f"hand_model:{conv_shape}")
         return self.ln(x, training= training)
 
 
@@ -120,6 +121,7 @@ class PoseModel(Model):
         # current shape: (batch, window_count, convolved_t, convolved_result, filters)
         conv_shape = x.shape
         x = layers.Reshape((conv_shape[1], -1))(x)
+        print(f"pose_model:{x.shape}")
         return self.ln(x, training = training)
         
 
@@ -138,6 +140,11 @@ class SLRModel(Model):
     def call(self, inputs, training= False, gru_state = None, reset_state = False):
         # inputs 0: L, 1: R, 2: Pose
         l_inputs, r_inputs, p_inputs = inputs
+        print("SLR_model:")
+        print(l_inputs.shape)
+        print(r_inputs.shape)
+        print(p_inputs.shape)
+
         l_res = self.left_hand_model(l_inputs, training=training)
         r_res = self.right_hand_model(r_inputs, training=training)
         p_res = self.pose_model(p_inputs, training=training)
