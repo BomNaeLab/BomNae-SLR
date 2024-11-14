@@ -319,7 +319,7 @@ class SLRModel(Model):
         self.dense_out = layers.Dense(combined_output_size, activation='softmax')
         self.flat = layers.Flatten()
         self.proj_hand = Project(6400)
-        self.proj_pose = Project(384)
+        self.proj_pose = Project(1920)
         
     def flatten_residual_connection(self, original, result, residual_factor = 1.0):
         """ flattens the inputs and make residual connection
@@ -332,14 +332,14 @@ class SLRModel(Model):
         # print("result flat:", result.shape)
         if result.shape[-1] == 6400:
             residual = self.proj_hand(original)
-        elif result.shape[-1] == 384:
+        elif result.shape[-1] == 1920:
             residual = self.proj_pose(original)
 
         return layers.add([result, residual*residual_factor])
     
     def call(self, inputs, training= False):
         # inputs 0: L, 1: R, 2: Pose
-        print(inputs)
+        # print(inputs)
         l_inputs, r_inputs, p_inputs = inputs
         # input shape: (batch(1) , window_count, window_size, features**)
         per_window = []
@@ -444,7 +444,8 @@ def convert_to_dataset(x_train, y_train, batch_size = 1, sample_weights=None):
         dataset_raw = tf.data.Dataset.from_tensor_slices((x_train, y_train, sample_weights))
     else:
         dataset_raw = tf.data.Dataset.from_tensor_slices((x_train, y_train))
-    dataset = dataset_raw.shuffle(buffer_size=len(x_train)).padded_batch(batch_size, drop_remainder=True)
+    # dataset = dataset_raw.shuffle(buffer_size=len(x_train))#.padded_batch(batch_size, drop_remainder=True)
+    dataset = dataset_raw.batch(batch_size)
     return dataset
 
 # the part that doesnt get executed when imported
