@@ -94,6 +94,7 @@ class HandModel(Model):
         self.ln = layers.LayerNormalization()
 
     def call(self, x, training= False):
+        print(f"hand_model_0:{x.shape}")
         x = self.clstm(x)
         conv_shape = x.shape
         # current shape: (batch, window_count, convolved_t, convolved_h, convolved_w, filters)
@@ -117,11 +118,11 @@ class PoseModel(Model):
 
     def call(self, x, training= False):
         # input shape:  batch window_count window_size features channel
+        print(f"pose_model:{x.shape}")
         x = self.clstm(x)
         # current shape: (batch, window_count, convolved_t, convolved_result, filters)
         conv_shape = x.shape
         x = layers.Reshape((conv_shape[1], -1))(x)
-        print(f"pose_model:{x.shape}")
         return self.ln(x, training = training)
         
 
