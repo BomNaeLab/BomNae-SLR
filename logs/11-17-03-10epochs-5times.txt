@@ -1,0 +1,16 @@
+03-19-13:1) person:1 : 0001.npz ~ 1000.npz
+03-23-16:1) person:1 : 0001.npz ~ 3000.npz
+03-29-58:2) person:1 : 0001.npz ~ 3000.npz
+03-36-15:3) person:1 : 0001.npz ~ 3000.npz
+03-42-30:4) person:1 : 0001.npz ~ 3000.npz
+03-48-45:5) person:1 : 0001.npz ~ 3000.npz
+03-55-01:2) person:2 : 0001.npz ~ 0002.npz
+03-59-30:3) person:2 : 0003.npz ~ 0004.npz
+04-03-58:4) person:2 : 0005.npz ~ 0006.npz
+04-08-25:5) person:2 : 0007.npz ~ 0008.npz
+04-12-54:1) person:3 : 0001.npz ~ 3000.npz
+04-19-27:2) person:3 : 0001.npz ~ 3000.npz
+04-25-59:3) person:3 : 0001.npz ~ 3000.npz
+04-32-30:4) person:3 : 0001.npz ~ 3000.npz
+04-39-01:5) person:3 : 0001.npz ~ 3000.npz
+04-45-33:2) person:4 : 0001.npz ~ 0001.npz

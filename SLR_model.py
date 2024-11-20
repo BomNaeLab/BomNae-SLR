@@ -57,7 +57,7 @@ pose_stride = (1 , 1)
 combined_dense1_size = 512
 combined_output_size = 3000
 # optimizer
-learning_rate = 0.001
+learning_rate = 0.00005
 cce_loss = keras.losses.CategoricalCrossentropy(from_logits=False)
 # bin_acc_metric = keras.metrics.BinaryAccuracy()
 cat_acc_metric = keras.metrics.CategoricalAccuracy()

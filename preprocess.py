@@ -9,8 +9,8 @@ data_dir = 'signData'
 train_dir = os.path.join(data_dir,'train')
 val_dir = os.path.join(data_dir,'valid')
 
-output_dir = os.path.join(data_dir,'nptxt_CL')
-val_output_dir = os.path.join(data_dir,"nptxt_CL_val")
+output_dir = os.path.join(data_dir,'nptxt_lite')
+val_output_dir = os.path.join(data_dir,"nptxt_lite_val")
 weight_dir = os.path.join(data_dir,'weights')
 
 train_landmark_dir = os.path.join(train_dir,'label','landmark')
@@ -23,21 +23,23 @@ val_morpheme_dir = os.path.join(val_dir,'morpheme')
 def getoutputdir(type="train"):
     return val_output_dir if type=='val' else output_dir
 
-with open('wordtonum.json', 'r', encoding="UTF8") as json_file:
+with open('wordtonum_lite.json', 'r', encoding="UTF8") as json_file:
     words_dicts = json.load(json_file)
+
 
 def load_data(file_name,type="train"):
     path=f"{getoutputdir(type)}/{file_name}"
-
+    w_path=f"{weight_dir}/{file_name}"
     data = np.load(path)
-
+    # weight_data = np.load(w_path)
     #좌표값 로드
     wordCoordL = data['wordCoordL']
     wordCoordR = data['wordCoordR']
     wordCoordP = data['wordCoordP']
     weight = data['weight']
+    # weight = weight_data['weight']
     #단어 뜻 호출
-    ans = data['label'][0]
+    ans = data['label'][0]#ori_data=2
     ans = ans.replace('\n', '')
     #해당 단어의 value 호출
     if ans[-1].isdigit():
