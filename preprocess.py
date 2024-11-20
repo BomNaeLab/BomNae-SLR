@@ -23,7 +23,7 @@ val_morpheme_dir = os.path.join(val_dir,'morpheme')
 def getoutputdir(type="train"):
     return val_output_dir if type=='val' else output_dir
 
-with open('wordtonum_lite.json', 'r', encoding="UTF8") as json_file:
+with open('wordtonum.json', 'r', encoding="UTF8") as json_file:
     words_dicts = json.load(json_file)
 
 
