@@ -55,7 +55,9 @@ pose_stride = (1 , 1)
 # pose_stride = (1,1)
 # combined FC
 combined_dense1_size = 512
-combined_output_size = 2363
+# combined_output_size = 2363
+combined_output_size = 1880
+
 # optimizer
 learning_rate = 0.00005
 cce_loss = keras.losses.CategoricalCrossentropy(from_logits=False)
