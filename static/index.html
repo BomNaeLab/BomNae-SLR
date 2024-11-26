@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Video with FastAPI</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background-color: black;
+        }
+        canvas {
+            position: relative;
+        }
+        #videoCanvas, #landmarksCanvas {
+            width: 512px; /* 페이지에 표시할 크기 */
+            height: 512px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 비디오 프레임 캔버스 -->
+    <canvas id="videoCanvas"></canvas>
+    <!-- 랜드마크 캔버스 -->
+    <canvas id="landmarksCanvas"></canvas>
+    <!-- 비디오 요소 (숨김 상태로 사용) -->
+    <video id="videoElement" style="display: none" autoplay></video>
+
+    <script>
+        const socket = new WebSocket("ws://localhost:8000/ws/video");
+        const videoCanvas = document.getElementById("videoCanvas");
+        const videoCtx = videoCanvas.getContext("2d");
+        const landmarksCanvas = document.getElementById("landmarksCanvas");
+        const landmarksCtx = landmarksCanvas.getContext("2d");
+        const videoElement = document.getElementById("videoElement");
+
+        // JavaScript로 캔버스 크기 설정 (입력은 1080x1080, 출력은 512x512)
+        videoCanvas.width = 640;
+        videoCanvas.height = 640;
+        landmarksCanvas.width = 512;
+        landmarksCanvas.height = 512;
+
+        async function startVideo() {
+            const videoStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 1080 },
+                    height: { ideal: 1080 },
+                    facingMode: "user"
+                }
+            });
+            videoElement.srcObject = videoStream;
+            videoElement.play();
+            requestAnimationFrame(sendFrames);
+        }
+
+        let lastFrameTime = 0; // 마지막 프레임 타임 추적
+        function sendFrames(timestamp) {
+            // 30FPS 유지: 1000ms / 30 = 33.33ms 간격으로 전송
+            if (timestamp - lastFrameTime >= 33) {
+                if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+                    const sourceWidth = videoElement.videoWidth;
+                    const sourceHeight = videoElement.videoHeight;
+
+                    // 비디오 프레임을 캔버스에 그리기
+                    videoCtx.clearRect(0, 0, videoCanvas.width, videoCanvas.height);
+                    videoCtx.drawImage(
+                        videoElement,
+                        0, 0, sourceWidth, sourceHeight,
+                        0, 0, videoCanvas.width, videoCanvas.height
+                    );
+
+                    // 캔버스를 이미지 데이터로 변환 후 전송
+                    videoCanvas.toBlob((blob) => {
+                        if (socket.readyState === WebSocket.OPEN) {
+                            socket.send(blob);
+                        }
+                    }, "image/jpeg", 0.6);
+
+                    lastFrameTime = timestamp; // 마지막 전송 시간 업데이트
+                }
+            }
+            requestAnimationFrame(sendFrames); // 다음 프레임 요청
+        }
+
+        socket.onmessage = function (event) {
+            try {
+                const landmarks = JSON.parse(event.data);
+                landmarksCtx.clearRect(0, 0, landmarksCanvas.width, landmarksCanvas.height);
+
+                landmarks.forEach(([x, y]) => {
+                    const canvasX = x * landmarksCanvas.width;
+                    const canvasY = y * landmarksCanvas.height;
+                    console.log(`Landmark X: ${x}, Y: ${y}`);
+                    landmarksCtx.beginPath();
+                    landmarksCtx.arc(canvasX, canvasY, 2, 0, 2 * Math.PI);
+                    landmarksCtx.fillStyle = "red";
+                    landmarksCtx.fill();
+                });
+            } catch (e) {
+                console.error("Error parsing landmarks:", e);
+            }
+        };
+
+        startVideo();
+    </script>
+</body>
+</html>
