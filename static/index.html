@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Video with FastAPI</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background-color: black;
+        }
+        canvas {
+            position: absolute;
+        }
+        #videoCanvas {
+            width: 512px;
+            height: 512px;
+        }
+        #results {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="videoCanvas"></canvas>
+    <video id="videoElement" style="display: none" autoplay></video>
+    <div id="results"></div>
+
+    <script>
+        const socket = new WebSocket("ws://localhost:8000/ws/video");
+        const videoCanvas = document.getElementById("videoCanvas");
+        const videoCtx = videoCanvas.getContext("2d");
+        const videoElement = document.getElementById("videoElement");
+
+        videoCanvas.width = 512;
+        videoCanvas.height = 512;
+
+        let results = []; // 예측 결과를 저장할 배열
+
+        // WebSocket 연결 확인
+        socket.onopen = () => {
+            console.log('WebSocket 연결 성공!');
+        };
+
+        socket.onclose = () => {
+            console.log('WebSocket 연결 종료');
+        };
+
+        socket.onerror = (error) => {
+            console.error('WebSocket 오류 발생:', error);
+        };
+
+        // 메시지 수신 시 처리
+        socket.onmessage = function (event) {
+            try {
+                console.log("Received data:", event.data);  // 수신된 데이터 로그 출력
+                const data = JSON.parse(event.data);
+                results = data;  // 예측 결과 데이터 업데이트
+
+                displayResults();  // 예측 결과 화면에 표시
+            } catch (e) {
+                console.error("Error parsing data:", e);
+            }
+        };
+
+        // 예측 결과를 표시하는 함수
+        function displayResults() {
+            const resultsDiv = document.getElementById("results");
+
+            if (results.length === 0) {
+                resultsDiv.innerHTML = "No results to display.";  // 결과가 없으면 표시
+                return;
+            }
+
+            // 결과가 20개 이하일 경우만 표시
+            resultsDiv.innerHTML = "";  // 기존 내용을 지운 후 새로운 결과를 표시
+
+            // 예측 결과를 표시
+            results.slice(0, 20).forEach((result, index) => {
+                const resultElement = document.createElement("div");
+                resultElement.textContent = `${index + 1}. ${result}`;
+                resultsDiv.appendChild(resultElement);
+            });
+
+            console.log("Displayed results:", results);  // 화면에 표시된 결과 확인
+        }
+
+        async function startVideo() {
+            const videoStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 216 },
+                    height: { ideal: 216 },
+                    facingMode: "user"
+                }
+            });
+            videoElement.srcObject = videoStream;
+            videoElement.play();
+            requestAnimationFrame(sendFrames);
+        }
+
+        let lastFrameTime = 0;
+        function sendFrames(timestamp) {
+            if (timestamp - lastFrameTime >= 33) {
+                if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+                    const sourceWidth = videoElement.videoWidth;
+                    const sourceHeight = videoElement.videoHeight;
+
+                    videoCtx.clearRect(0, 0, videoCanvas.width, videoCanvas.height);
+                    videoCtx.drawImage(
+                        videoElement,
+                        0, 0, sourceWidth, sourceHeight,
+                        0, 0, videoCanvas.width, videoCanvas.height
+                    );
+
+                    videoCanvas.toBlob((blob) => {
+                        if (socket.readyState === WebSocket.OPEN) {
+                            socket.send(blob);
+                        }
+                    }, "image/jpeg", 0.6);
+
+                    lastFrameTime = timestamp;
+                }
+            }
+
+            requestAnimationFrame(sendFrames);
+        }
+
+        startVideo();
+    </script>
+</body>
+</html>
