@@ -69,17 +69,17 @@ def vote_system(l, r, p, model_path="11-20-16-30epochs-5times_final.keras"):
 
     top = vote_counter.most_common(1)[0]
     if top[1] > THRESHOLD:
-        if top[0] != last_output:
-            last_output = top[0]
-            output_num = top[0]
-
+        if top[0][0] != last_output:
+            last_output = top[0][0]
+            output_num = top[0][0]
+            print(output_num)
             # JSON에서 번호를 단어로 변환
             with open('wordtonum_lite_old.json', 'r', encoding="UTF8") as json_file:
                 data = json.load(json_file)
                 result = next((key for key, value in data.items() if value == output_num), None)
         else:
-            result = "not"
+            result = ""
     else:
-        result = "not"  # Threshold 미만이면 빈 문자열 반환
+        result = ""  # Threshold 미만이면 빈 문자열 반환
 
     return result
